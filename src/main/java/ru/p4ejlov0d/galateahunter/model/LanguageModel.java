@@ -1,9 +1,14 @@
 package ru.p4ejlov0d.galateahunter.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import net.minecraft.text.MutableText;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
+@Environment(EnvType.CLIENT)
 public record LanguageModel(
         @JsonProperty("galateahunter.general_category") String generalCategory,
         @JsonProperty("galateahunter.lang") String lang,
@@ -37,15 +42,18 @@ public record LanguageModel(
         @JsonProperty("galateahunter.total_fusions") String totalFusions,
         @JsonProperty("galateahunter.total_reptiles") String totalReptiles,
         @JsonProperty("galateahunter.total_coins") String totalCoins,
-        @JsonProperty("galateahunter.coins_saved") String coinsSaved
+        @JsonProperty("galateahunter.coins_saved") String coinsSaved,
+        @JsonProperty("galateahunter.crocodile") String crocodile,
+        @JsonProperty("galateahunter.sea_serpent") String seaSerpent,
+        @JsonProperty("galateahunter.tiamat") String tiamat,
+        @JsonProperty("galateahunter.bazaar_strategy") String bazaarStrategy,
+        @JsonProperty("galateahunter.refresh_prices_tooltip") String refreshPricesTooltip,
+        @JsonProperty("galateahunter.fusions") String fusions,
+        @JsonProperty("galateahunter.quantity") String quantity,
+        @JsonProperty("galateahunter.buy_cost") String buyCost,
+        @JsonProperty("galateahunter.fusion_cost") String fusionCost
 ) {
-    public static MutableText[] parseTexts(String[] descriptions) {
-        MutableText[] texts = new MutableText[descriptions.length];
-
-        for (int i = 0; i < descriptions.length; i++) {
-            texts[i] = Text.literal(descriptions[i]);
-        }
-
-        return texts;
+    public static @NotNull Text @NotNull [] toTexts(@NotNull String... descriptions) {
+        return Arrays.stream(descriptions).map(Text::literal).toArray(Text[]::new);
     }
 }

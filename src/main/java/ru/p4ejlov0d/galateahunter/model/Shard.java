@@ -4,85 +4,34 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.minecraft.util.Identifier;
 
+import java.util.Objects;
+
 public class Shard {
     @JsonIgnore
-    private Identifier texture;
+    public Identifier texture;
 
     @JsonIgnore
-    private String id;
+    public String id;
 
-    private String name;
-    private String family;
-    private String type;
-    private String rarity;
+    public String name;
+    public String family;
+    public String type;
+    public String rarity;
 
     @JsonProperty("fuse_amount")
-    private int fuseAmount;
+    public int fuseAmount;
 
     @JsonProperty("internal_id")
-    private String internalId;
+    public String internalId;
 
-    public Identifier getTexture() {
-        return texture;
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Shard shard)) return false;
+        return fuseAmount == shard.fuseAmount && Objects.equals(texture, shard.texture) && Objects.equals(id, shard.id) && Objects.equals(name, shard.name) && Objects.equals(family, shard.family) && Objects.equals(type, shard.type) && Objects.equals(rarity, shard.rarity) && Objects.equals(internalId, shard.internalId);
     }
 
-    public void setTexture(Identifier texture) {
-        this.texture = texture;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getFamily() {
-        return family;
-    }
-
-    public void setFamily(String family) {
-        this.family = family;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getRarity() {
-        return rarity;
-    }
-
-    public void setRarity(String rarity) {
-        this.rarity = rarity;
-    }
-
-    public int getFuseAmount() {
-        return fuseAmount;
-    }
-
-    public void setFuseAmount(int fuseAmount) {
-        this.fuseAmount = fuseAmount;
-    }
-
-    public String getInternalId() {
-        return internalId;
-    }
-
-    public void setInternalId(String internalId) {
-        this.internalId = internalId;
+    @Override
+    public int hashCode() {
+        return Objects.hash(texture, id, name, family, type, rarity, fuseAmount, internalId);
     }
 }

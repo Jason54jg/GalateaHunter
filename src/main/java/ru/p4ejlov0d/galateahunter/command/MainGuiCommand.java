@@ -5,16 +5,18 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
+import org.jetbrains.annotations.NotNull;
 import ru.p4ejlov0d.galateahunter.screen.GalateaHunterScreen;
 
-public class MainGuiCommand {
-    public static void register() {
+public class MainGuiCommand implements Command {
+    @Override
+    public void register() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess)
-                -> dispatcher.register(ClientCommandManager.literal("gh").executes(MainGuiCommand::execute))
+                -> dispatcher.register(ClientCommandManager.literal("gh").executes(this::execute))
         );
     }
 
-    private static int execute(CommandContext<FabricClientCommandSource> context) {
+    private int execute(@NotNull CommandContext<FabricClientCommandSource> context) {
         MinecraftClient client = context.getSource().getClient();
         client.send(() -> client.setScreen(GalateaHunterScreen.createGui()));
 

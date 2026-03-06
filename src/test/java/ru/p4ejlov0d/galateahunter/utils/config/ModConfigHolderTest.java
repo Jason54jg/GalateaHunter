@@ -4,15 +4,19 @@ import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.loader.api.FabricLoader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import ru.p4ejlov0d.galateahunter.TestUtils;
 import ru.p4ejlov0d.galateahunter.config.GalateaHunterConfig;
 
 import java.io.File;
-import java.lang.reflect.Field;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModConfigHolderTest {
+    @AfterAll
+    static void afterAll() {
+        TestUtils.clearConfig();
+    }
+
     @Test
     void register() {
         ModConfigHolder.register();
@@ -29,36 +33,23 @@ class ModConfigHolderTest {
     @Test
     void save() {
         GalateaHunterConfig expected = new GalateaHunterConfig();
-        expected.setLanguageCode("aaa");
+        expected.languageCode = "aaa";
 
-        ModConfigHolder.getConfig().setLanguageCode("aaa");
+        ModConfigHolder.getConfig().languageCode = "aaa";
         ModConfigHolder.save();
-        ModConfigHolder.getConfig().setLanguageCode("bbb");
+        ModConfigHolder.getConfig().languageCode = "bbb";
         AutoConfig.getConfigHolder(GalateaHunterConfig.class).load();
 
-        assertEquals(expected.getLanguageCode(), ModConfigHolder.getConfig().getLanguageCode());
+        assertEquals(expected.languageCode, ModConfigHolder.getConfig().languageCode);
     }
 
     @Test
     void reset() {
-        ModConfigHolder.getConfig().setLanguageCode("ccc");
-        ModConfigHolder.getConfig().setImagesCount(123);
+        ModConfigHolder.getConfig().languageCode = "ccc";
+        ModConfigHolder.getConfig().imagesCount = 123;
         ModConfigHolder.reset();
 
-        assertEquals(new GalateaHunterConfig().getLanguageCode(), ModConfigHolder.getConfig().getLanguageCode());
-        assertEquals(123, ModConfigHolder.getConfig().getImagesCount());
-    }
-
-    @AfterAll
-    static void afterAll() {
-        new File(FabricLoader.getInstance().getConfigDir().toString() + "/galateahunter.json5").delete();
-
-        try {
-            Field field = AutoConfig.class.getDeclaredField("holders");
-            field.setAccessible(true);
-            ((HashMap) field.get(null)).clear();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        assertEquals(new GalateaHunterConfig().languageCode, ModConfigHolder.getConfig().languageCode);
+        assertEquals(123, ModConfigHolder.getConfig().imagesCount);
     }
 }

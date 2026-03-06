@@ -1,5 +1,7 @@
 package ru.p4ejlov0d.galateahunter.screen.widget;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
@@ -8,27 +10,26 @@ import net.minecraft.client.gui.widget.PressableWidget;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import ru.p4ejlov0d.galateahunter.model.Shard;
 
-public class SuggestionWidget extends PressableWidget {
-    private final PressAction onPress;
-    private final ButtonTextures textures;
-    private final int x;
-    private final int y;
+import java.util.function.Consumer;
 
-    public SuggestionWidget(int x, int y, int width, int height, Identifier icon, Identifier hoveredIcon, PressAction onPress) {
+@Environment(EnvType.CLIENT)
+public class SuggestionWidget extends PressableWidget {
+    private final Consumer<SuggestionWidget> onPress;
+    private final ButtonTextures textures;
+
+    public SuggestionWidget(int x, int y, int width, int height, Identifier icon, Identifier hoveredIcon, @NotNull Consumer<SuggestionWidget> onPress) {
         super(x, y, width, height, Text.empty());
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        textures = new ButtonTextures(icon, hoveredIcon);
         this.onPress = onPress;
+        textures = new ButtonTextures(icon, hoveredIcon);
     }
 
     @Override
     public void onPress() {
-        this.onPress.onPress(this);
+        onPress.accept(this);
     }
 
     @Override
@@ -36,24 +37,21 @@ public class SuggestionWidget extends PressableWidget {
         this.appendDefaultNarrations(builder);
     }
 
-    public void renderWidget(DrawContext context, Shard shard, TextRenderer textRenderer, int mouseX, int mouseY) {
-        context.drawTexture(RenderLayer::getGuiTextured, textures.get(isNarratable(), isMouseOver(mouseX, mouseY)), x, y, 0f, 0f, width, height, width, height);
-        context.drawTexture(RenderLayer::getGuiTextured, shard.getTexture(), x + 4, y + 2, 0f, 0f, height - 6, height - 6, height - 6, height - 6);
-        context.drawText(textRenderer, Text.literal(shard.getName()).withColor(getColorByRarity(shard)).append(Text.literal(" (" + shard.getId().toUpperCase() + ")").withColor(0xFF808080)), x + height + 2, y + height - height * 85 / 100, 0xFFFFFFFF, false);
-        context.drawText(textRenderer, shard.getFamily(), x + height + 2, y + height * 62 / 100, 0xFFFFFFFF, false);
+    public void renderWidget(@NotNull DrawContext context, @NotNull Shard shard, TextRenderer textRenderer, int mouseX, int mouseY) {
+        context.drawTexture(RenderLayer::getGuiTextured, textures.get(isNarratable(), isMouseOver(mouseX, mouseY)), getX(), getY(), 0f, 0f, width, height, width, height);
+        context.drawTexture(RenderLayer::getGuiTextured, shard.texture, getX() + 4, getY() + 2, 0f, 0f, height - 6, height - 6, height - 6, height - 6);
+        context.drawText(textRenderer, Text.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Text.literal(" (" + shard.id.toUpperCase() + ")").withColor(0xFF808080)), getX() + height + 2, getY() + height - height * 85 / 100, 0xFFFFFFFF, false);
+        context.drawText(textRenderer, shard.family, getX() + height + 2, getY() + height * 62 / 100, 0xFFFFFFFF, false);
     }
 
-    private int getColorByRarity(Shard shard) {
-        return switch (shard.getRarity()) {
+    @Contract(pure = true)
+    private int getColorByRarity(@NotNull String rarity) {
+        return switch (rarity) {
             case "uncommon" -> 0xFF05DF72;
             case "rare" -> 0xFF51A2FF;
             case "epic" -> 0xFFC27AFF;
             case "legendary" -> 0xFFFFD700;
-            case null, default -> 0xFFFFFFFF;
+            default -> 0xFFFFFFFF;
         };
-    }
-
-    public interface PressAction {
-        void onPress(SuggestionWidget button);
     }
 }

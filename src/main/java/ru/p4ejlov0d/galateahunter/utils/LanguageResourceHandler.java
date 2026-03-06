@@ -1,11 +1,15 @@
 package ru.p4ejlov0d.galateahunter.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ru.p4ejlov0d.galateahunter.model.LanguageModel;
 import ru.p4ejlov0d.galateahunter.utils.config.ModConfigHolder;
 
@@ -15,17 +19,14 @@ import java.util.*;
 import static ru.p4ejlov0d.galateahunter.GalateaHunter.LOGGER;
 import static ru.p4ejlov0d.galateahunter.GalateaHunter.MOD_ID;
 
+@Environment(EnvType.CLIENT)
 public class LanguageResourceHandler implements SimpleSynchronousResourceReloadListener {
     private static LanguageResourceHandler instance;
-    private final Map<String, Resource> LANG_FILES;
-    private final Map<String, String> NAME_TO_CODE;
-    private String currentLangCode;
 
-    {
-        LANG_FILES = new LinkedHashMap<>();
-        currentLangCode = ModConfigHolder.getConfig().getLanguageCode();
-        NAME_TO_CODE = new HashMap<>();
-    }
+    private final Map<String, Resource> LANG_FILES = new HashMap<>();
+    private final Map<String, String> NAME_TO_CODE = new HashMap<>();
+
+    private String currentLangCode;
 
     private LanguageResourceHandler() {
     }
@@ -33,59 +34,45 @@ public class LanguageResourceHandler implements SimpleSynchronousResourceReloadL
     public static LanguageResourceHandler getInstance() {
         if (instance == null) {
             instance = new LanguageResourceHandler();
+            instance.currentLangCode = ModConfigHolder.getConfig().languageCode;
         }
         return instance;
     }
 
     public String[] loadLangNames() {
-        List<String> langNamesList = new ArrayList<>();
-
-        LOGGER.debug("Loading language names");
+        final List<String> langNamesList = new ArrayList<>();
 
         for (Map.Entry<String, Resource> entry : LANG_FILES.entrySet()) {
-            Resource resource = entry.getValue();
-            String resourceName = entry.getKey();
+            final Resource resource = entry.getValue();
+            final String resourceName = entry.getKey();
+
             String line;
 
             try (BufferedReader reader = resource.getReader()) {
                 while ((line = reader.readLine()) != null) {
                     if (line.contains("galateahunter.lang_name")) {
 
-                        LOGGER.debug("Loading language name from {}", resourceName);
-
-                        String langName = line.split(":")[1]
-                                .replaceAll("\"", "")
-                                .replace(",", "")
-                                .trim();
+                        final String langName = line.split("\"")[3];
 
                         langNamesList.add(langName);
                         NAME_TO_CODE.put(langName, resourceName);
-
-                        LOGGER.debug("Loaded \"{}\" language name from {}", langName, resourceName);
                     }
                 }
             } catch (Exception e) {
-                LOGGER.warn("Failed to read line in {}", resourceName);
-                throw new RuntimeException(e);
+                LOGGER.error("Failed to read line in {}", resourceName);
             }
         }
-
-        LOGGER.debug("Finished loading language names with {} size", langNamesList.size());
 
         return langNamesList.toArray(new String[LANG_FILES.size()]);
     }
 
     public void changeLangCodeByLangName(String langName) {
-        String langCode = NAME_TO_CODE.get(langName);
+        final String langCode = NAME_TO_CODE.get(langName);
 
-        LOGGER.debug("Changed language code from {} to {}", currentLangCode, langCode);
-
-        currentLangCode = langCode;
-
-        ModConfigHolder.getConfig().setLanguageCode(langCode);
+        currentLangCode = ModConfigHolder.getConfig().languageCode = langCode;
     }
 
-    public LanguageModel getLanguageModel() {
+    public @Nullable LanguageModel getLanguageModel() {
         Resource resource = Optional.ofNullable(
                 LANG_FILES.get(
                         Optional.ofNullable(currentLangCode).orElseGet(() -> {
@@ -106,13 +93,12 @@ public class LanguageResourceHandler implements SimpleSynchronousResourceReloadL
                 json.append(s);
             }
 
-            LOGGER.debug("Deserializing json string: {}", json);
-
             return mapper.readValue(json.toString(), LanguageModel.class);
         } catch (Exception e) {
             LOGGER.warn("Failed to deserialize object, caused by {}, language code: {}", e.getMessage(), currentLangCode);
-            throw new RuntimeException(e);
         }
+
+        return null;
     }
 
     @Override
@@ -121,16 +107,9 @@ public class LanguageResourceHandler implements SimpleSynchronousResourceReloadL
     }
 
     @Override
-    public void reload(ResourceManager manager) {
-        LOGGER.debug("Starting to load language resources");
-
-        for (Identifier id : manager.findResources("lang", path -> path.toString().endsWith(".json")).keySet()) {
-            if (id.getNamespace().equals(MOD_ID)) {
+    public void reload(@NotNull ResourceManager manager) {
+        for (Identifier id : manager.findResources("lang", path -> path.toString().endsWith(".json")).keySet())
+            if (id.getNamespace().equals(MOD_ID))
                 LANG_FILES.put(id.getPath().split("/")[1].split("\\.")[0], manager.getResource(id).get());
-
-                LOGGER.debug("Loaded language resource: {}", id);
-            }
-        }
-        LOGGER.debug("Finished loading language resources with {} loaded resources", LANG_FILES.size());
     }
 }

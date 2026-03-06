@@ -1,11 +1,14 @@
 package ru.p4ejlov0d.galateahunter.repo.impl;
 
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ru.p4ejlov0d.galateahunter.model.Shard;
 import ru.p4ejlov0d.galateahunter.repo.ShardRepo;
-import ru.p4ejlov0d.galateahunter.repo.remote.RemoteRepository;
+import ru.p4ejlov0d.galateahunter.utils.RemoteRepository;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,38 +21,33 @@ import static ru.p4ejlov0d.galateahunter.GalateaHunter.*;
 public class ShardRepoImpl implements ShardRepo {
     public static final Path imagesRootPath = MOD_CONFIG_DIR.resolve("images");
     public static final Path dataRootPath = MOD_CONFIG_DIR.resolve("data");
-    private static ShardRepo instance;
+
     private final RemoteRepository REMOTE_REPOSITORY = RemoteRepository.getInstance();
     // skyshards
     private final URI remoteDataPath = URI.create("https://skyshards.com/fusion-data.json");
 
+    // initializes outside this class
     private final Map<String, Shard> SHARDS = new HashMap<>();
 
-    private ShardRepoImpl() {
-    }
-
-    public static ShardRepo getInstance() {
-        if (instance == null) {
-            instance = new ShardRepoImpl();
-        }
-        return instance;
-    }
-
     @Override
-    public File[] getShardImages() {
-        File shardIcons = imagesRootPath.resolve("assets/" + MOD_ID + "/").toFile();
+    public @NotNull File[] getShardImages() {
+        final File shardIcons = imagesRootPath.resolve("assets/" + MOD_ID + "/").toFile();
 
         if (!Files.isDirectory(shardIcons.toPath()) || REMOTE_REPOSITORY.isNeedUpdate())
             REMOTE_REPOSITORY.cloneRepoWithImages();
 
-        return Arrays.stream(shardIcons.listFiles())
+        final File[] icons = shardIcons.listFiles();
+
+        if (icons == null) return new File[0];
+
+        return Arrays.stream(icons)
                 .filter(file -> file.isFile() && file.getName().endsWith(".png"))
                 .toArray(File[]::new);
     }
 
     @Override
-    public File getShardData() {
-        File dataFile = new File(dataRootPath.resolve("fusion-data.json").toUri());
+    public @Nullable File getShardData() {
+        final File dataFile = new File(dataRootPath.resolve("fusion-data.json").toUri());
 
         if (!Files.exists(dataFile.toPath())) {
             try {
@@ -58,6 +56,12 @@ public class ShardRepoImpl implements ShardRepo {
                 LOGGER.info("Successfully downloaded shard data to {}", dataFile.getAbsolutePath());
             } catch (Exception e) {
                 LOGGER.error("An error occurred while trying to download shard data", e);
+                try {
+                    Files.deleteIfExists(dataFile.toPath());
+                } catch (IOException ex) {
+                    LOGGER.error("Could not delete shard data file {}", dataFile.getAbsolutePath(), ex);
+                }
+                return null;
             }
         }
 
@@ -65,7 +69,12 @@ public class ShardRepoImpl implements ShardRepo {
     }
 
     @Override
-    public Map<String, Shard> getShards() {
+    public @NotNull Map<String, Shard> getShards() {
         return SHARDS;
+    }
+
+    @Override
+    public @Nullable Shard get(String key) {
+        return SHARDS.get(key);
     }
 }

@@ -1,4 +1,4 @@
-package ru.p4ejlov0d.galateahunter.repo.remote;
+package ru.p4ejlov0d.galateahunter.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -11,6 +11,7 @@ import ru.p4ejlov0d.galateahunter.utils.config.ModConfigHolder;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -21,7 +22,7 @@ import static ru.p4ejlov0d.galateahunter.repo.impl.ShardRepoImpl.imagesRootPath;
 
 public class RemoteRepository {
     private static RemoteRepository instance;
-    private RemoteRepositorySnapshot snapshot;
+
     private boolean isNeedUpdate = false;
 
     private RemoteRepository() {
@@ -31,8 +32,8 @@ public class RemoteRepository {
         return instance == null ? instance = new RemoteRepository() : instance;
     }
 
-    public CompletableFuture<Void> register() {
-        createSnapshot(ModConfigHolder.getConfig().getImagesCount());
+    public CompletableFuture<Void> checkForUpdates() {
+        int oldImagesCount = ModConfigHolder.getConfig().imagesCount;
 
         CompletableFuture<Git> git = CompletableFuture.supplyAsync(() -> {
             try {
@@ -42,10 +43,12 @@ public class RemoteRepository {
                 return null;
             }
         });
-        CompletableFuture<Repository> repos = git.thenApplyAsync(Git::getRepository);
-        CompletableFuture<ObjectId> id = git.thenApplyAsync(git1 -> {
+        CompletableFuture<Repository> repos = git.thenApply(Git::getRepository);
+        CompletableFuture<ObjectId> id = git.thenApply(g -> {
+            if (g == null) return null;
+
             try {
-                return git1.fetch()
+                return g.fetch()
                         .setInitialBranch("refs/heads/master")
                         .setDepth(1)
                         .setRefSpecs("refs/heads/master:refs/remotes/origin/master")
@@ -73,10 +76,11 @@ public class RemoteRepository {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to read object in repository", e);
+                count = -1;
+                LOGGER.warn("Failed to read object in repository", e);
             }
 
-            if (count != getSnapshot()) {
+            if (count != oldImagesCount) {
                 isNeedUpdate = true;
                 LOGGER.info("It seems the remote repository has been updated");
             }
@@ -96,6 +100,7 @@ public class RemoteRepository {
             LOGGER.info("Failed to clean directory {}, cause {}", imagesRootPath.toAbsolutePath(), e.getMessage());
         } catch (Exception e) {
             LOGGER.error("Failed to clean directory {}", imagesRootPath.toAbsolutePath(), e);
+            return;
         }
 
         try {
@@ -110,8 +115,8 @@ public class RemoteRepository {
                     .call()
                     .close();
 
-            File tempGit = imagesRootPath.getParent().resolve(".git/").toFile();
-            File tempDir = imagesRootPath.getParent().resolve("assets/" + MOD_ID + "/").toFile();
+            final File tempGit = imagesRootPath.getParent().resolve(".git/").toFile();
+            final File tempDir = imagesRootPath.getParent().resolve("assets/" + MOD_ID + "/").toFile();
 
             FileUtils.copyDirectoryToDirectory(imagesRootPath.resolve(".git/").toFile(), tempGit.getParentFile());
             FileUtils.copyToDirectory(Arrays.asList(imagesRootPath.resolve("public/shardIcons").toFile().listFiles()), tempDir);
@@ -122,9 +127,8 @@ public class RemoteRepository {
                 file.renameTo(new File(file.getParentFile(), file.getName().toLowerCase()));
             }
 
-            ModConfigHolder.getConfig().setImagesCount(tempDir.listFiles().length);
+            ModConfigHolder.getConfig().imagesCount = tempDir.listFiles().length;
             ModConfigHolder.save();
-            createSnapshot(tempDir.listFiles().length);
             isNeedUpdate = false;
 
             FileUtils.moveDirectoryToDirectory(tempDir.getParentFile(), imagesRootPath.toFile(), false);
@@ -133,21 +137,15 @@ public class RemoteRepository {
             LOGGER.info("Successfully cloned skyshards repository to {}", imagesRootPath.toAbsolutePath());
         } catch (Exception e) {
             LOGGER.error("Failed to clone repository to {}", imagesRootPath.toAbsolutePath(), e);
+            try {
+                FileUtils.deleteDirectory(imagesRootPath.toFile());
+            } catch (IOException ex) {
+                LOGGER.error("Failed to rollback cloning repository to {}", imagesRootPath.toAbsolutePath(), ex);
+            }
         }
-    }
-
-    private void createSnapshot(int filesLength) {
-        snapshot = new RemoteRepositorySnapshot(filesLength);
-    }
-
-    public int getSnapshot() {
-        return snapshot != null ? snapshot.filesLength() : ModConfigHolder.getConfig().getImagesCount();
     }
 
     public boolean isNeedUpdate() {
         return isNeedUpdate;
-    }
-
-    private record RemoteRepositorySnapshot(int filesLength) {
     }
 }

@@ -1,20 +1,19 @@
 package ru.p4ejlov0d.galateahunter.model;
 
+import net.minecraft.text.Text;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
+@SuppressWarnings("ALL")
 class LanguageModelTest {
-
     @Test
-    void parseTexts() {
-        String[] expected = new String[]{"a", "c", "b", "e", "d", "sfwefewf", "235325"};
-        var actual = LanguageModel.parseTexts(expected);
+    void toTexts() {
+        final String[] expected = new String[]{"a", "c", "b", "e", "d", "sfwefewf", "235325"};
+        final Text[] actual = LanguageModel.toTexts(expected);
 
-        for (int i = 0; i < expected.length; i++) {
-            assertEquals(expected[i], actual[i].getLiteralString());
-        }
-
-        assertEquals(expected.length, actual.length);
+        assertArrayEquals(expected, Arrays.stream(actual).map(Text::getLiteralString).toArray(String[]::new));
     }
 }

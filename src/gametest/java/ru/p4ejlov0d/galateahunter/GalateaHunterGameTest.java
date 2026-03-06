@@ -7,19 +7,15 @@ import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.world.WorldCreator;
 import net.minecraft.world.Difficulty;
+import org.jetbrains.annotations.NotNull;
 import ru.p4ejlov0d.galateahunter.screen.RecipeScreen;
 import ru.p4ejlov0d.galateahunter.screen.widget.IconButtonWidget;
 import ru.p4ejlov0d.galateahunter.screen.widget.TextFieldWidgetWithSuggestions;
 
 import java.lang.reflect.Field;
 
-@SuppressWarnings("UnstableApiUsage")
+@SuppressWarnings("ALL")
 public class GalateaHunterGameTest implements FabricClientGameTest {
-    /**
-     * Runs the gametest.
-     *
-     * @param context
-     */
     @Override
     public void runTest(ClientGameTestContext context) {
         try (TestSingleplayerContext singleplayerContext = context.worldBuilder()
@@ -39,13 +35,13 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         }
     }
 
-    private void recipeCommandWithoutArgsTest(ClientGameTestContext context) {
+    private void recipeCommandWithoutArgsTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe"));
 
         context.waitForScreen(RecipeScreen.class);
     }
 
-    private void recipeCommandWithArgsTest(ClientGameTestContext context) {
+    private void recipeCommandWithArgsTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe Wyvern Shard"));
 
         context.waitForScreen(RecipeScreen.class);
@@ -60,12 +56,12 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         });
     }
 
-    private void mainScreenCommandTest(ClientGameTestContext context) {
+    private void mainScreenCommandTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.player.networkHandler.sendChatCommand("gh"));
         context.waitForScreen(Screen.class);
     }
 
-    private void recipeSelectTest(ClientGameTestContext context) {
+    private void recipeSelectTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe Wither"));
 
         context.waitForScreen(RecipeScreen.class);
@@ -87,7 +83,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         });
     }
 
-    private void recipeSettingsButtonTest(ClientGameTestContext context) {
+    private void recipeSettingsButtonTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.setScreen(new RecipeScreen()));
         context.waitForScreen(RecipeScreen.class);
 
@@ -100,7 +96,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         context.waitFor(client -> !(client.currentScreen instanceof RecipeScreen));
     }
 
-    private void recipeOverviewListButtonTest(ClientGameTestContext context) {
+    private void recipeOverviewListButtonTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe o"));
         context.waitForScreen(RecipeScreen.class);
 
