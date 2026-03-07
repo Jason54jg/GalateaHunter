@@ -13,7 +13,8 @@ import ru.p4ejlov0d.galateahunter.utils.tree.Tree;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.StampedLock;
+
+import static ru.p4ejlov0d.galateahunter.GalateaHunter.LOGGER;
 
 public class RecipeService extends AbstractService<RecipeRepo, Shard, List<FusionData>> {
     private static RecipeService instance;
@@ -21,7 +22,6 @@ public class RecipeService extends AbstractService<RecipeRepo, Shard, List<Fusio
     private final BazaarService bazaarService = BazaarService.INSTANCE;
 
     private final Map<Shard, FusionData> cheapestRecipes = new HashMap<>();
-    private final StampedLock lock = new StampedLock();
 
     private Tree<Shard, FusionData> tree;
     private int oldQuantity;
@@ -38,7 +38,7 @@ public class RecipeService extends AbstractService<RecipeRepo, Shard, List<Fusio
 
     @Override
     public CompletableFuture<Void> load() {
-        return updateFuture = CompletableFuture.runAsync(this::updateCheapestRecipes, WorkerManager.singleThreadPool);
+        return updateFuture = CompletableFuture.runAsync(this::updateCheapestRecipes, WorkerManager.singleThreadPool).thenRun(() -> bazaarService.isUpdated = false);
     }
 
     public @NotNull Tree<Shard, FusionData> getRecipeTree(final Shard selected, int quantity) {
@@ -52,16 +52,16 @@ public class RecipeService extends AbstractService<RecipeRepo, Shard, List<Fusio
 
         root.shard = selected;
         root.quantity = quantity;
+
+        if (cheapestRecipes.isEmpty() || bazaarService.isUpdated) {
+            if (updateFuture.isDone()) load();
+
+            updateFuture.join();
+        }
+
         root.price = bazaarService.getPrice(selected, quantity);
 
         tree = new Tree<>(selected, root);
-
-        if (cheapestRecipes.isEmpty() || bazaarService.isUpdated) {
-            if (!lock.isWriteLocked()) {
-                updateCheapestRecipes();
-                bazaarService.isUpdated = false;
-            } else if (updateFuture != null) updateFuture.join();
-        }
 
         parseNode(selected, tree.root, List.of(selected), quantity);
 
@@ -135,13 +135,11 @@ public class RecipeService extends AbstractService<RecipeRepo, Shard, List<Fusio
     }
 
     private void updateCheapestRecipes() {
-        final long stamp = lock.writeLock();
         final Map<Shard, List<FusionData>> shardRecipes = repo.getShardRecipes();
 
-        if (shardRecipes.isEmpty()) {
-            lock.unlock(stamp);
-            return;
-        }
+        if (shardRecipes.isEmpty()) return;
+
+        LOGGER.info("Updating cheapest recipes...");
 
         cheapestRecipes.clear();
 
@@ -244,12 +242,9 @@ public class RecipeService extends AbstractService<RecipeRepo, Shard, List<Fusio
                 counter = 0;
             }
         }
-        lock.unlock(stamp);
     }
 
     public long getCheapestRecipePrice(Shard shard) {
-        if (lock.isWriteLocked()) return Long.MAX_VALUE / 2;
-
         return cheapestRecipes.get(shard).price;
     }
 
