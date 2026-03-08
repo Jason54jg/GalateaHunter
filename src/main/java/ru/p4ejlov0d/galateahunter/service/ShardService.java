@@ -1,6 +1,6 @@
 package ru.p4ejlov0d.galateahunter.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.llamalad7.mixinextras.lib.apache.commons.tuple.Pair;
 import net.minecraft.resource.ResourcePack;
 import net.minecraft.util.Identifier;
@@ -66,7 +66,7 @@ public class ShardService extends AbstractService<ShardRepo, String, Shard> {
                 }
             } catch (Exception e) {
                 LOGGER.error("Error while reading shard data", e);
-                return new HashMap<>();
+                jsonIdImage.clear();
             }
 
             return jsonIdImage;
@@ -92,7 +92,7 @@ public class ShardService extends AbstractService<ShardRepo, String, Shard> {
                     final String id = entry.getValue().getLeft();
                     final File image = entry.getValue().getRight();
 
-                    final Shard shard = new ObjectMapper().readValue(json.substring(6, json.lastIndexOf("},") == -1 ? json.length() : json.lastIndexOf("},") + 1), Shard.class);
+                    final Shard shard = new Gson().fromJson(json.substring(6, json.lastIndexOf("},") == -1 ? json.length() : json.lastIndexOf("},") + 1), Shard.class);
                     Identifier texture = Identifier.of(MOD_ID, image.getName());
 
                     shard.id = id;

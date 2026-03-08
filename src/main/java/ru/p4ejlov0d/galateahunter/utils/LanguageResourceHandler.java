@@ -1,12 +1,12 @@
 package ru.p4ejlov0d.galateahunter.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.SynchronousResourceReloader;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,7 @@ import static ru.p4ejlov0d.galateahunter.GalateaHunter.LOGGER;
 import static ru.p4ejlov0d.galateahunter.GalateaHunter.MOD_ID;
 
 @Environment(EnvType.CLIENT)
-public class LanguageResourceHandler implements SimpleSynchronousResourceReloadListener {
+public class LanguageResourceHandler implements SynchronousResourceReloader {
     private static LanguageResourceHandler instance;
 
     private final Map<String, Resource> LANG_FILES = new HashMap<>();
@@ -39,7 +39,7 @@ public class LanguageResourceHandler implements SimpleSynchronousResourceReloadL
         return instance;
     }
 
-    public String[] loadLangNames() {
+    public @NotNull String[] loadLangNames() {
         final List<String> langNamesList = new ArrayList<>();
 
         for (Map.Entry<String, Resource> entry : LANG_FILES.entrySet()) {
@@ -66,44 +66,33 @@ public class LanguageResourceHandler implements SimpleSynchronousResourceReloadL
         return langNamesList.toArray(new String[LANG_FILES.size()]);
     }
 
-    public void changeLangCodeByLangName(String langName) {
+    public void changeLangCodeByLangName(@Nullable String langName) {
         final String langCode = NAME_TO_CODE.get(langName);
 
         currentLangCode = ModConfigHolder.getConfig().languageCode = langCode;
     }
 
     public @Nullable LanguageModel getLanguageModel() {
-        Resource resource = Optional.ofNullable(
+        final Resource resource = Optional.ofNullable(
                 LANG_FILES.get(
-                        Optional.ofNullable(currentLangCode).orElseGet(() -> {
-                            if (MinecraftClient.getInstance() != null) {
-                                return MinecraftClient.getInstance().getLanguageManager().getLanguage();
-                            }
-                            return null;
-                        })
+                        Optional.ofNullable(currentLangCode).orElseGet(
+                                () -> MinecraftClient.getInstance() != null ? MinecraftClient.getInstance().getLanguageManager().getLanguage() : null)
                 )
         ).orElse(LANG_FILES.get("en_us"));
 
         try (BufferedReader reader = resource.getReader()) {
-            StringBuilder json = new StringBuilder();
+            final StringBuilder json = new StringBuilder();
             String s;
-            ObjectMapper mapper = new ObjectMapper();
+            final Gson gson = new Gson();
 
-            while ((s = reader.readLine()) != null) {
-                json.append(s);
-            }
+            while ((s = reader.readLine()) != null) json.append(s);
 
-            return mapper.readValue(json.toString(), LanguageModel.class);
+            return gson.fromJson(json.toString(), LanguageModel.class);
         } catch (Exception e) {
             LOGGER.warn("Failed to deserialize object, caused by {}, language code: {}", e.getMessage(), currentLangCode);
         }
 
         return null;
-    }
-
-    @Override
-    public Identifier getFabricId() {
-        return Identifier.tryParse(MOD_ID, "load_lang");
     }
 
     @Override

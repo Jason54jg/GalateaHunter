@@ -35,12 +35,13 @@ public class BazaarRepoImpl implements BazaarRepo {
     public void updateShardPrices() {
         final long stamp;
         if ((stamp = lock.tryWriteLock()) != 0L) {
-            try (HttpClient client = HttpClient.newHttpClient()) {
+            try (final HttpClient client = HttpClient.newHttpClient()) {
                 LOGGER.info("Downloading prices from {}", bazaarEndpoint);
 
                 final HttpRequest request = HttpRequest.newBuilder(bazaarEndpoint).timeout(Duration.ofSeconds(15)).GET().build();
                 final HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
+                // response to pretty JSON
                 final Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 final JsonElement element = JsonParser.parseString(response.body());
                 final String prettyJson = gson.toJson(element);

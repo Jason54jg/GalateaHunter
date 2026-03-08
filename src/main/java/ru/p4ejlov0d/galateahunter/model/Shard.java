@@ -1,16 +1,16 @@
 package ru.p4ejlov0d.galateahunter.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import net.minecraft.util.Identifier;
 
 import java.util.Objects;
 
 public class Shard {
-    @JsonIgnore
+    @Expose(deserialize = false)
     public Identifier texture;
 
-    @JsonIgnore
+    @Expose(deserialize = false)
     public String id;
 
     public String name;
@@ -18,10 +18,10 @@ public class Shard {
     public String type;
     public String rarity;
 
-    @JsonProperty("fuse_amount")
+    @SerializedName("fuse_amount")
     public int fuseAmount;
 
-    @JsonProperty("internal_id")
+    @SerializedName("internal_id")
     public String internalId;
 
     @Override

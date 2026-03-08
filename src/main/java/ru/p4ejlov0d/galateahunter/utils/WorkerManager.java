@@ -3,7 +3,15 @@ package ru.p4ejlov0d.galateahunter.utils;
 import java.util.concurrent.*;
 
 public class WorkerManager {
-    public static final ThreadPoolExecutor singleThreadPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1), Executors.defaultThreadFactory(), new ThreadPoolExecutor.DiscardPolicy());
+    public static final ThreadPoolExecutor singleThreadPool = new ThreadPoolExecutor(
+            1,
+            1,
+            0L,
+            TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(1),
+            Executors.defaultThreadFactory(),
+            new ThreadPoolExecutor.DiscardPolicy()
+    );
 
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 

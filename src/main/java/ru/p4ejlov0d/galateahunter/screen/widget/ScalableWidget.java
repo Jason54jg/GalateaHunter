@@ -2,33 +2,45 @@ package ru.p4ejlov0d.galateahunter.screen.widget;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.cursor.StandardCursors;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.MouseInput;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
+@SuppressWarnings("unused")
 @Environment(EnvType.CLIENT)
 public class ScalableWidget implements Drawable, Widget, Element, Selectable {
     private final Identifier background;
     private final IconButtonWidget zoomIn, zoomOut;
     private final int zoomInButton, zoomOutButton;
     private final Content content;
+
     public boolean visible = true;
+
     protected int x, y, width, height;
     protected boolean hovered;
+
+    private boolean drawsBackground = true;
     private boolean focused;
     private boolean controlPressed;
+    private Click click;
     private int step, zoomCeil;
 
     public ScalableWidget(int x, int y, int width, int height, @Nullable Content content, @Nullable Identifier background, @Nullable IconButtonWidget zoomIn, @Nullable IconButtonWidget zoomOut, int zoomInButton, int zoomOutButton) {
@@ -43,8 +55,8 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
         this.zoomInButton = zoomInButton;
         this.zoomOutButton = zoomOutButton;
 
-        if (this.zoomIn != null) this.zoomIn.setOnPress(btn -> keyPressed(zoomInButton, 0, 0));
-        if (this.zoomOut != null) this.zoomOut.setOnPress(btn -> keyPressed(zoomOutButton, 0, 0));
+        if (this.zoomIn != null) this.zoomIn.setOnPress(btn -> keyPressed(new KeyInput(zoomInButton, 0, 0)));
+        if (this.zoomOut != null) this.zoomOut.setOnPress(btn -> keyPressed(new KeyInput(zoomOutButton, 0, 0)));
 
         if (this.content != null) {
             this.step = (int) Math.ceil((this.content.width + this.content.height) / 8D);
@@ -57,25 +69,41 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
         return new Builder();
     }
 
+    public void setDrawsBackground(boolean drawsBackground) {
+        this.drawsBackground = drawsBackground;
+    }
+
     @Override
     public final void render(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
         if (!visible) return;
-        if (background != null)
-            context.drawTexture(RenderLayer::getGuiTextured, background, x, y, 0f, 0f, width, height, width, height);
+        if (background != null && drawsBackground)
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, background, x, y, 0f, 0f, width, height, width, height);
 
         if (content != null) {
             context.enableScissor(this.x, this.y, this.x + this.width, this.y + this.height);
             content.render(context, mouseX, mouseY, deltaTicks);
             context.disableScissor();
         }
+        if (isMouseOver(mouseX, mouseY)) context.setCursor(StandardCursors.RESIZE_ALL);
 
         if (zoomIn != null) zoomIn.render(context, mouseX, mouseY, deltaTicks);
         if (zoomOut != null) zoomOut.render(context, mouseX, mouseY, deltaTicks);
     }
 
     @Override
-    public final boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return visible && hovered && zoomIn != null && !zoomIn.mouseClicked(mouseX, mouseY, button) && zoomOut != null && !zoomOut.mouseClicked(mouseX, mouseY, button);
+    public final boolean mouseClicked(Click click, boolean doubled) {
+        this.click = click;
+        return visible && hovered && zoomIn != null && !zoomIn.mouseClicked(click, doubled) && zoomOut != null && !zoomOut.mouseClicked(click, doubled);
+    }
+
+    @Override
+    public final boolean mouseReleased(Click click) {
+        if (this.click.equals(click)) {
+            this.forEachChild(child -> child.mouseClicked(click, false));
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -84,11 +112,11 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
     }
 
     @Override
-    public final boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT || content == null) return false;
+    public final boolean mouseDragged(@NonNull Click click, double offsetX, double offsetY) {
+        if (click.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT || content == null) return false;
 
-        content.x += (int) deltaX;
-        content.y += (int) deltaY;
+        content.x += (int) offsetX;
+        content.y += (int) offsetY;
 
         return true;
     }
@@ -99,12 +127,14 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
         if (controlPressed && content != null) return verticalAmount < 0 ? tryChangeZoom(-step) : tryChangeZoom(step);
 
         final double sensitivity = 15; // I took it at random
-        return mouseDragged(mouseX, mouseY, GLFW.GLFW_MOUSE_BUTTON_LEFT, horizontalAmount * sensitivity, verticalAmount * sensitivity);
+        return mouseDragged(new Click(mouseX, mouseY, new MouseInput(GLFW.GLFW_MOUSE_BUTTON_LEFT, 0)), horizontalAmount * sensitivity, verticalAmount * sensitivity);
     }
 
     @Override
-    public final boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public final boolean keyPressed(KeyInput input) {
         if (!visible || content == null) return false;
+
+        final int keyCode = input.key();
 
         if (keyCode == GLFW.GLFW_KEY_LEFT_CONTROL) controlPressed = true;
         if (keyCode == zoomInButton) return tryChangeZoom(step);
@@ -114,7 +144,7 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
     }
 
     @Override
-    public final boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+    public final boolean keyReleased(KeyInput input) {
         controlPressed = false;
         return true;
     }
@@ -182,9 +212,17 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
         return width;
     }
 
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
     @Override
     public int getHeight() {
         return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     @Override
@@ -194,14 +232,8 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
 
     @Override
     public void forEachChild(Consumer<ClickableWidget> consumer) {
-    }
-
-    public void setBounds(@Nullable Integer width, @Nullable Integer height) {
-        width = width == null ? this.width : width;
-        height = height == null ? this.height : height;
-        if (width < 0 && height > 0 || height < 0 && width > 0) return;
-        this.width = width;
-        this.height = height;
+        if (content != null) for (ClickableWidget child : content.children)
+            consumer.accept(child);
     }
 
     @Environment(EnvType.CLIENT)
@@ -309,7 +341,8 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
                 this.content.y = this.y + this.height / 2 - this.content.height / 2;
             }
 
-            return new ScalableWidget(this.x,
+            return new ScalableWidget(
+                    this.x,
                     this.y,
                     this.width,
                     this.height,
@@ -326,6 +359,11 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
     @Environment(EnvType.CLIENT)
     public static class Content implements Drawable {
         private final DrawableContent render;
+
+        /**
+         * Used for loop children in Scalable Widget
+         */
+        public List<ClickableWidget> children = new ArrayList<>();
 
         private int x, y, width, height;
 
@@ -356,6 +394,7 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
             return height;
         }
 
+        @FunctionalInterface
         @Environment(EnvType.CLIENT)
         public interface DrawableContent {
             void render(Content content, DrawContext context, int mouseX, int mouseY, float deltaTicks);

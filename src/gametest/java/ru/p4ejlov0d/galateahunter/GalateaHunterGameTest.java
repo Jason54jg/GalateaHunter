@@ -1,6 +1,7 @@
 package ru.p4ejlov0d.galateahunter;
 
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
+import net.fabricmc.fabric.api.client.gametest.v1.TestInput;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.client.gui.Element;
@@ -8,9 +9,13 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.world.WorldCreator;
 import net.minecraft.world.Difficulty;
 import org.jetbrains.annotations.NotNull;
+import ru.p4ejlov0d.galateahunter.model.Shard;
+import ru.p4ejlov0d.galateahunter.model.ShardData;
 import ru.p4ejlov0d.galateahunter.screen.RecipeScreen;
 import ru.p4ejlov0d.galateahunter.screen.widget.IconButtonWidget;
 import ru.p4ejlov0d.galateahunter.screen.widget.TextFieldWidgetWithSuggestions;
+import ru.p4ejlov0d.galateahunter.service.BazaarService;
+import ru.p4ejlov0d.galateahunter.service.ShardService;
 
 import java.lang.reflect.Field;
 
@@ -32,23 +37,24 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
             recipeSelectTest(context);
             recipeSettingsButtonTest(context);
             recipeOverviewListButtonTest(context);
+            updatePricesButtonTest(context);
         }
     }
 
     private void recipeCommandWithoutArgsTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe"));
-
         context.waitForScreen(RecipeScreen.class);
     }
 
     private void recipeCommandWithArgsTest(@NotNull ClientGameTestContext context) {
-        context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe Wyvern Shard"));
+        final String testText = "Wyvern Shard";
 
+        context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe " + testText));
         context.waitForScreen(RecipeScreen.class);
         context.waitFor(client -> {
             for (Element el : client.currentScreen.children()) {
                 if (el instanceof TextFieldWidgetWithSuggestions child) {
-                    return child.getText().equals("Wyvern Shard");
+                    return child.getText().equals(testText);
                 }
             }
 
@@ -63,14 +69,14 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
 
     private void recipeSelectTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe Wither"));
-
         context.waitForScreen(RecipeScreen.class);
-        context.getInput().moveCursor(0d, -70d);
 
+        final TestInput input = context.getInput();
+
+        input.moveCursor(0d, -70d);
         // delay
-        context.getInput().holdKeyFor(0, 80);
-
-        context.getInput().pressMouse(0);
+        input.holdKeyFor(0, 80);
+        input.pressMouse(0);
 
         context.waitFor(client -> {
             for (Element el : client.currentScreen.children()) {
@@ -87,38 +93,59 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         context.runOnClient(client -> client.setScreen(new RecipeScreen()));
         context.waitForScreen(RecipeScreen.class);
 
-        context.getInput().setCursorPos(800d, 40d);
+        final TestInput input = context.getInput();
+
+        input.setCursorPos(800d, 40d);
         // delay
-        context.getInput().holdKeyFor(0, 80);
+        input.holdKeyFor(0, 80);
+        input.pressMouse(0);
 
-        context.getInput().pressMouse(0);
-
-        context.waitFor(client -> !(client.currentScreen instanceof RecipeScreen));
+        context.waitFor(client -> !(client.currentScreen instanceof RecipeScreen || client.currentScreen == null));
     }
 
     private void recipeOverviewListButtonTest(@NotNull ClientGameTestContext context) {
         context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe o"));
         context.waitForScreen(RecipeScreen.class);
 
-        context.getInput().setCursorPos(400d, 100d);
-        // delay
-        context.getInput().holdKeyFor(0, 80);
+        final TestInput input = context.getInput();
 
-        context.getInput().pressMouse(0);
-        context.getInput().setCursorPos(12d, 45d);
-        context.getInput().pressMouse(0);
+        input.setCursorPos(400d, 100d);
+        // delay
+        input.holdKeyFor(0, 80);
+        input.pressMouse(0);
+        input.setCursorPos(12d, 45d);
+        input.pressMouse(0);
 
         context.waitFor(client -> {
-            RecipeScreen recipeScreen = (RecipeScreen) client.currentScreen;
+            if (!(client.currentScreen instanceof RecipeScreen recipeScreen)) return false;
             try {
-                Field close = recipeScreen.getClass().getDeclaredField("close");
+                final Field close = recipeScreen.getClass().getDeclaredField("close");
                 close.setAccessible(true);
-                boolean isVisible = ((IconButtonWidget) close.get(recipeScreen)).visible;
+
+                final boolean isVisible = ((IconButtonWidget) close.get(recipeScreen)).visible;
 
                 return !isVisible;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private void updatePricesButtonTest(@NotNull ClientGameTestContext context) {
+        context.runOnClient(client -> client.setScreen(new RecipeScreen()));
+        context.waitForScreen(RecipeScreen.class);
+
+        final Shard testShard = ShardService.INSTANCE.get("l4");
+        final ShardData testShardData = BazaarService.INSTANCE.get(testShard);
+
+        final TestInput input = context.getInput();
+
+        input.setCursorPos(775d, 40d);
+        // delay
+        input.holdKeyFor(0, 80);
+        input.pressMouse(0);
+
+        context.waitFor(client -> BazaarService.INSTANCE.get(testShard) != null);
+        assert (testShardData != BazaarService.INSTANCE.get(testShard));
     }
 }

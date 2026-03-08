@@ -1,6 +1,6 @@
 package ru.p4ejlov0d.galateahunter.service;
 
-import net.fabricmc.fabric.impl.resource.loader.ModNioResourcePack;
+import net.fabricmc.fabric.impl.resource.pack.ModNioPackResources;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resource.ResourceType;
 import org.junit.jupiter.api.AfterAll;
@@ -32,7 +32,7 @@ class ShardServiceTest {
     void load() {
         ModConfigHolder.register();
 
-        ShardService.INSTANCE.setResourcePack(ModNioResourcePack.create(MOD_ID, FabricLoader.getInstance().getModContainer(MOD_ID).get(), null, ResourceType.CLIENT_RESOURCES, null, false));
+        ShardService.INSTANCE.setResourcePack(ModNioPackResources.create(MOD_ID, FabricLoader.getInstance().getModContainer(MOD_ID).get(), null, ResourceType.CLIENT_RESOURCES, null, false));
         ShardService.INSTANCE.load().thenRun(() -> {
             Path configDir = FabricLoader.getInstance().getConfigDir();
             File images = new File(configDir.resolve(MOD_ID + "/images/assets/" + MOD_ID).toUri());

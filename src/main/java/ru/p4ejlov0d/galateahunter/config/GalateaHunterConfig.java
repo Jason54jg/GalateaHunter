@@ -10,12 +10,16 @@ import static ru.p4ejlov0d.galateahunter.GalateaHunter.MOD_ID;
 @Config(name = MOD_ID)
 public class GalateaHunterConfig implements ConfigData {
     public final Tracking tracking = new Tracking();
+
     public final Recipe recipe = new Recipe();
+
     @Comment("Default: null")
     public String languageCode = null;
+
     @Comment("Default: true")
     public boolean isBeautifulBazaarCategoryEnabled = true;
-    @Comment("Default: 0. Configuration is not for user, do not touch")
+
+    @Comment("Default: 0")
     public int imagesCount = 0;
 
     public static class Tracking {

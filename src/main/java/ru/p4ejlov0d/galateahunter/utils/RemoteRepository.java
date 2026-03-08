@@ -33,7 +33,7 @@ public class RemoteRepository {
     }
 
     public CompletableFuture<Void> checkForUpdates() {
-        int oldImagesCount = ModConfigHolder.getConfig().imagesCount;
+        final int oldImagesCount = ModConfigHolder.getConfig().imagesCount;
 
         CompletableFuture<Git> git = CompletableFuture.supplyAsync(() -> {
             try {
@@ -63,7 +63,7 @@ public class RemoteRepository {
             int count = 0;
 
             try (RevWalk walk = new RevWalk(repo)) {
-                RevCommit commit = walk.parseCommit(objectId);
+                final RevCommit commit = walk.parseCommit(objectId);
 
                 try (TreeWalk treeWalk = new TreeWalk(repo)) {
                     treeWalk.reset(commit.getTree());
@@ -93,6 +93,7 @@ public class RemoteRepository {
         });
     }
 
+    @SuppressWarnings("DataFlowIssue")
     public void cloneRepoWithImages() {
         try {
             FileUtils.cleanDirectory(imagesRootPath.toFile());

@@ -2,19 +2,22 @@ package ru.p4ejlov0d.galateahunter.screen;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import ru.p4ejlov0d.galateahunter.model.FusionData;
 import ru.p4ejlov0d.galateahunter.model.LanguageModel;
 import ru.p4ejlov0d.galateahunter.model.Shard;
@@ -37,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static ru.p4ejlov0d.galateahunter.GalateaHunter.MOD_ID;
 
+@SuppressWarnings("SuspiciousNameCombination")
 @Environment(EnvType.CLIENT)
 public class RecipeScreen extends Screen {
     private static final Text TITLE = Text.literal("Recipe");
@@ -49,7 +53,7 @@ public class RecipeScreen extends Screen {
     private String searchText;
     private Tree<Shard, FusionData> tree;
 
-    private TextFieldWidgetWithSuggestions search;
+    private TextFieldWidgetWithSuggestions<Shard> search;
     private IconButtonWidget close;
     private IconButtonWidget list;
     private TextFieldWidget quantityField;
@@ -68,8 +72,29 @@ public class RecipeScreen extends Screen {
     protected void init() {
         languageModel = LanguageResourceHandler.getInstance().getLanguageModel();
 
-        search = new TextFieldWidgetWithSuggestions(textRenderer, (int) (width / 3.3333333d), 5, (int) (width / 2.5d), 30, shardService.getShards());
-        search.setPlaceholder(Text.literal(languageModel.search()));
+        final Identifier normalSearchTexture = Identifier.of(MOD_ID, "textures/gui/search-field.png");
+        final Identifier focusedSearchTexture = Identifier.of(MOD_ID, "textures/gui/search-field-highlighted.png");
+
+        search = new TextFieldWidgetWithSuggestions.Builder<Shard>()
+                .normalTexture(normalSearchTexture)
+                .focusedTexture(focusedSearchTexture)
+                .x((int) (width / 3.3333333d))
+                .y(5)
+                .width((int) (width / 2.5d))
+                .height(30)
+                .placeholder(Text.literal(languageModel.search()).styled(style -> style.withoutShadow().withColor(0xFFFFFFFF)))
+                .toTextureFunction(shard -> shard.texture)
+                .toSuggestionRender(shard -> (context, x, y, width, height, mouseX, mouseY, deltaTicks) -> {
+                    final ButtonTextures textures = new ButtonTextures(Identifier.of(MOD_ID, "textures/gui/" + shard.rarity + ".png"), Identifier.of(MOD_ID, "textures/gui/" + shard.rarity + "-selected.png"));
+                    final boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+
+                    context.drawTexture(RenderPipelines.GUI_TEXTURED, textures.get(true, hovered), x, y, 0f, 0f, width, height, width, height);
+                    context.drawTexture(RenderPipelines.GUI_TEXTURED, shard.texture, x + 4, y + 2, 0f, 0f, height - 6, height - 6, height - 6, height - 6);
+                    context.drawText(textRenderer, Text.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Text.literal(" (" + shard.id.toUpperCase() + ")").withColor(0xFF808080)), x + height + 2, y + height - height * 85 / 100, 0xFFFFFFFF, false);
+                    context.drawText(textRenderer, shard.family, x + height + 2, y + height * 62 / 100, 0xFFFFFFFF, false);
+                })
+                .toStringFunction(shard -> shard.name)
+                .build(textRenderer, shardService.getShards());
 
         if (searchText != null) {
             search.write(searchText);
@@ -98,7 +123,7 @@ public class RecipeScreen extends Screen {
                     list.visible = true;
                     quantityField.visible = false;
                     recipeWidget.setX(5);
-                    recipeWidget.setBounds(width - 10, null);
+                    recipeWidget.setWidth(width - 10);
                 });
 
         close.visible = false;
@@ -111,12 +136,18 @@ public class RecipeScreen extends Screen {
                     close.visible = true;
                     quantityField.visible = true;
                     recipeWidget.setX(width / 4 + 10);
-                    recipeWidget.setBounds(width - (width / 4 + 15), null);
+                    recipeWidget.setWidth(width - (width / 4 + 15));
                 });
 
         list.visible = false;
 
-        quantityField = new TextFieldWidgetWithSuggestions(textRenderer, 35, 167, width / 4 - 35, 10);
+        quantityField = new TextFieldWidgetWithSuggestions.Builder<>()
+                .normalTexture(normalSearchTexture)
+                .focusedTexture(focusedSearchTexture)
+                .position(35, 167)
+                .size(width / 4 - 34, 11)
+                .build(textRenderer, null);
+
         quantityField.visible = false;
         quantityField.setChangedListener(string -> {
             try {
@@ -211,8 +242,8 @@ public class RecipeScreen extends Screen {
                         final int startX = x + 5;
                         final int textX = startX + textureSize + 5;
 
-                        context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MOD_ID, "textures/gui/" + shard.rarity + ".png"), x, y, 0f, 0f, nodeWidth, nodeHeight, nodeWidth, nodeHeight);
-                        context.drawTexture(RenderLayer::getGuiTextured, shard.texture, startX, startY, 0f, 0f, textureSize, textureSize, textureSize, textureSize);
+                        context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/" + shard.rarity + ".png"), x, y, 0f, 0f, nodeWidth, nodeHeight, nodeWidth, nodeHeight);
+                        context.drawTexture(RenderPipelines.GUI_TEXTURED, shard.texture, startX, startY, 0f, 0f, textureSize, textureSize, textureSize, textureSize);
                         context.drawText(textRenderer, Text.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Text.literal(" x" + fusionData.quantity).withColor(0xFF808080)), textX, startY, 0xFFFFFFFF, false);
 
                         if (hasChildren) {
@@ -267,26 +298,29 @@ public class RecipeScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (search.interviewChildren(mouseX, mouseY, button)) {
-            list.onPress();
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (search.mouseClicked(click, doubled) && !search.isMouseOverSearchField(click.x(), click.y())) {
+            list.onPress(null);
             recipeWidget.visible = true;
             quantityField.setText("" + getQuantityByRarity(search.getSelectedSuggestion().rarity));
 
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
-        context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MOD_ID, "textures/gui/background-screen.png"), 0, 0, 0f, 0f, width, height, width, height);
-        context.draw();
-        applyBlur();
+    public void renderBackground(@NonNull DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/background-screen.png"), 0, 0, 0f, 0f, width, height, width, height);
+    }
+
+    @Override
+    public void render(@NonNull DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+        applyBlur(context);
 
         // header
         final Identifier header = Identifier.of(MOD_ID, "textures/gui/header.png");
-        context.drawTexture(RenderLayer::getGuiTextured, header, 0, 0, 0f, 0f, width, 40, width, 40);
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, header, 0, 0, 0f, 0f, width, 40, width, 40);
 
         // overview
         if (close.visible) {
@@ -317,8 +351,8 @@ public class RecipeScreen extends Screen {
 
             final Identifier rectangle = Identifier.of(MOD_ID, "textures/gui/rectangle.png");
 
-            context.drawTexture(RenderLayer::getGuiTextured, rectangle, 5, 45, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MOD_ID, "textures/gui/target.png"), 10, 50, 0f, 0f, 20, 20, 20, 20);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 45, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/target.png"), 10, 50, 0f, 0f, 20, 20, 20, 20);
             context.drawText(textRenderer, Text.literal(languageModel.overview()).styled(style -> style.withBold(true)), 35, 50, 0xFFFFFFFF, false);
 
             int offset = 35;
@@ -327,33 +361,33 @@ public class RecipeScreen extends Screen {
                 final int quantity = entry.getValue();
                 final Text quantityString = Text.literal(String.valueOf(quantity));
 
-                context.drawTexture(RenderLayer::getGuiTextured, shard.texture, offset, 58, 0f, 0f, 7, 7, 7, 7);
+                context.drawTexture(RenderPipelines.GUI_TEXTURED, shard.texture, offset, 58, 0f, 0f, 7, 7, 7, 7);
                 context.drawText(textRenderer, quantityString, offset, 67, 0xFFFFFFFF, false);
 
                 offset += textRenderer.getWidth(quantityString) + 5;
             }
 
-            context.drawTexture(RenderLayer::getGuiTextured, rectangle, 5, 80, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MOD_ID, "textures/gui/dollar.png"), 10, 85, 0f, 0f, 20, 20, 20, 20);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 80, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/dollar.png"), 10, 85, 0f, 0f, 20, 20, 20, 20);
             context.drawText(textRenderer, Text.literal(languageModel.totalCoins()).styled(style -> style.withBold(true)), 35, 85, 0xFFFFFFFF, false);
             context.drawText(textRenderer, getPrettyCoins(totalCoins.get()), 35, 97, 0xFFFFFFFF, false);
 
-            context.drawTexture(RenderLayer::getGuiTextured, rectangle, 5, 115, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MOD_ID, "textures/gui/stonks.png"), 10, 120, 0f, 0f, 20, 20, 20, 20);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 115, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/stonks.png"), 10, 120, 0f, 0f, 20, 20, 20, 20);
             context.drawText(textRenderer, Text.literal(languageModel.coinsSaved()).styled(style -> style.withBold(true)), 35, 120, 0xFFFFFFFF, false);
             context.drawText(textRenderer, getPrettyCoins(bazaarService.getPrice(tree.root.key, tree.root.value.quantity) - Long.parseLong(totalCoins.toString())), 35, 132, 0xFFFFFFFF, false);
 
-            context.drawTexture(RenderLayer::getGuiTextured, rectangle, 5, 150, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MOD_ID, "textures/gui/prismarine-shard.png"), 10, 155, 0f, 0f, 20, 20, 20, 20);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 150, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/prismarine-shard.png"), 10, 155, 0f, 0f, 20, 20, 20, 20);
             context.drawText(textRenderer, Text.literal(languageModel.totalShards()).styled(style -> style.withBold(true)), 35, 155, 0xFFFFFFFF, false);
 
-            context.drawTexture(RenderLayer::getGuiTextured, rectangle, 5, 185, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MOD_ID, "textures/gui/loop.png"), 10, 190, 0f, 0f, 20, 20, 20, 20);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 185, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/loop.png"), 10, 190, 0f, 0f, 20, 20, 20, 20);
             context.drawText(textRenderer, Text.literal(languageModel.totalFusions()).styled(style -> style.withBold(true)), 35, 190, 0xFFFFFFFF, false);
             context.drawText(textRenderer, Text.literal(totalFusions.toString()), 35, 202, 0xFFFFFFFF, false);
 
-            context.drawTexture(RenderLayer::getGuiTextured, rectangle, 5, 220, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MOD_ID, "textures/gui/reptile.png"), 10, 225, 0f, 0f, 20, 20, 20, 20);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 220, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/reptile.png"), 10, 225, 0f, 0f, 20, 20, 20, 20);
             context.drawText(textRenderer, Text.literal(languageModel.totalReptiles()).styled(style -> style.withBold(true)), 35, 225, 0xFFFFFFFF, false);
             context.drawText(textRenderer, Text.literal(totalReptiles.toString()), 35, 237, 0xFFFFFFFF, false);
         }
