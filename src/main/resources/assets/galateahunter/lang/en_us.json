@@ -28,5 +28,21 @@
   "galateahunter.reset_settings": "Reset settings",
   "galateahunter.reset_settings_tooltip": "Reset mod settings to default",
   "galateahunter.recipe": "Shard recipes",
-  "galateahunter.recipe_tooltip": "Search for a shard recipe"
+  "galateahunter.recipe_tooltip": "Change the settings that are taken into account when creating a recipe",
+  "galateahunter.search": "Search for a recipe...",
+  "galateahunter.overview": "Overview",
+  "galateahunter.total_shards": "Shard produced",
+  "galateahunter.total_fusions": "Total fusions",
+  "galateahunter.total_reptiles": "Pure reptiles",
+  "galateahunter.total_coins": "Total coins",
+  "galateahunter.coins_saved": "Coins saved",
+  "galateahunter.crocodile": "Assume Crocodile level",
+  "galateahunter.sea_serpent": "Assume Sea Serpent level",
+  "galateahunter.tiamat": "Assume Tiamat level",
+  "galateahunter.bazaar_strategy": "Assume bazaar prices strategy",
+  "galateahunter.refresh_prices_tooltip": "Refresh prices",
+  "galateahunter.fusions": "Fusions",
+  "galateahunter.quantity": "Quantity",
+  "galateahunter.buy_cost": "Buy cost",
+  "galateahunter.fusion_cost": "Craft cost"
 }

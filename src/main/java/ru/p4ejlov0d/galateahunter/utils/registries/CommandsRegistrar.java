@@ -1,14 +1,10 @@
 package ru.p4ejlov0d.galateahunter.utils.registries;
 
-import ru.p4ejlov0d.galateahunter.command.MainGuiCommand;
+import org.jetbrains.annotations.NotNull;
+import ru.p4ejlov0d.galateahunter.command.Command;
 
-import static ru.p4ejlov0d.galateahunter.GalateaHunter.LOGGER;
-
-public class CommandsRegistrar implements GalateaHunterModRegistrar {
-    @Override
-    public void register() {
-        LOGGER.debug("Registering main gui command");
-        MainGuiCommand.register();
-        LOGGER.debug("Main gui command has been registered");
+public class CommandsRegistrar {
+    public static void register(@NotNull Command command) {
+        command.register();
     }
 }

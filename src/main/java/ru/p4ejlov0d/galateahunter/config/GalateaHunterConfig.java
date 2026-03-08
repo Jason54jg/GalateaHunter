@@ -3,55 +3,40 @@ package ru.p4ejlov0d.galateahunter.config;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.Comment;
+import ru.p4ejlov0d.galateahunter.utils.Enums;
 
 import static ru.p4ejlov0d.galateahunter.GalateaHunter.MOD_ID;
 
 @Config(name = MOD_ID)
 public class GalateaHunterConfig implements ConfigData {
+    public final Tracking tracking = new Tracking();
+    public final Recipe recipe = new Recipe();
     @Comment("Default: null")
-    private String languageCode = null;
+    public String languageCode = null;
     @Comment("Default: true")
-    private boolean isBeautifulBazaarCategoryEnabled = true;
+    public boolean isBeautifulBazaarCategoryEnabled = true;
+    @Comment("Default: 0. Configuration is not for user, do not touch")
+    public int imagesCount = 0;
 
-    private Tracking tracking = new Tracking();
-
-    public String getLanguageCode() {
-        return languageCode;
-    }
-
-    public void setLanguageCode(String languageCode) {
-        this.languageCode = languageCode;
-    }
-
-    public boolean isBeautifulBazaarCategoryEnabled() {
-        return isBeautifulBazaarCategoryEnabled;
-    }
-
-    public void setBeautifulBazaarCategoryEnabled(boolean beautifulBazaarCategoryEnabled) {
-        isBeautifulBazaarCategoryEnabled = beautifulBazaarCategoryEnabled;
-    }
-
-    public boolean isHuntingBoxEnabled() {
-        return tracking.isHuntingBoxEnabled;
-    }
-
-    public void setHuntingBoxEnabled(boolean huntingBoxEnabled) {
-        tracking.isHuntingBoxEnabled = huntingBoxEnabled;
-    }
-
-    public boolean isAttributeMenuEnabled() {
-        return tracking.isAttributeMenuEnabled;
-    }
-
-    public void setAttributeMenuEnabled(boolean attributeMenuEnabled) {
-        tracking.isAttributeMenuEnabled = attributeMenuEnabled;
-    }
-
-    private static class Tracking {
+    public static class Tracking {
         @Comment("Default: true")
-        private boolean isHuntingBoxEnabled = true;
+        public boolean isHuntingBoxEnabled = true;
 
         @Comment("Default: true")
-        private boolean isAttributeMenuEnabled = true;
+        public boolean isAttributeMenuEnabled = true;
+    }
+
+    public static class Recipe {
+        @Comment("Default: 0")
+        public int crocodileLevel = 0;
+
+        @Comment("Default: 0")
+        public int seaSerpentLevel = 0;
+
+        @Comment("Default: 0")
+        public int tiamatLevel = 0;
+
+        @Comment("Default: BUY_OFFER")
+        public Enums.BazaarStrategy bazaarStrategy = Enums.BazaarStrategy.BUY_OFFER;
     }
 }
