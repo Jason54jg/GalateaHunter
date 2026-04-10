@@ -44,6 +44,8 @@ import static ru.p4ejlov0d.galateahunter.GalateaHunter.MOD_ID;
 @Environment(EnvType.CLIENT)
 public class RecipeScreen extends Screen {
     private static final Text TITLE = Text.literal("Recipe");
+    public static boolean minimized;
+    private static RecipeScreen savedRecipeScreen;
 
     private final BazaarService bazaarService = BazaarService.INSTANCE;
     private final ShardService shardService = ShardService.INSTANCE;
@@ -58,6 +60,7 @@ public class RecipeScreen extends Screen {
     private IconButtonWidget list;
     private TextFieldWidget quantityField;
     private ScalableWidget recipeWidget;
+    private IconButtonWidget minimize;
 
     public RecipeScreen() {
         super(TITLE);
@@ -66,6 +69,25 @@ public class RecipeScreen extends Screen {
     public RecipeScreen(@Nullable String searchText) {
         this();
         this.searchText = searchText;
+    }
+
+    public static ScalableWidget getSavedRecipeWidget() {
+        return savedRecipeScreen.recipeWidget;
+    }
+
+    public static RecipeScreen restoreScreen() {
+        savedRecipeScreen.width = savedRecipeScreen.client.getWindow().getScaledWidth();
+        savedRecipeScreen.height = savedRecipeScreen.client.getWindow().getScaledHeight();
+        savedRecipeScreen.search.setDimensionsAndPosition((int) (savedRecipeScreen.width / 2.5d), 30, (int) (savedRecipeScreen.width / 3.3333333d), 5);
+        savedRecipeScreen.quantityField.setText(savedRecipeScreen.quantityField.getText());
+        savedRecipeScreen.quantityField.setWidth(savedRecipeScreen.width / 4 - 34);
+        savedRecipeScreen.recipeWidget.setPosition(savedRecipeScreen.list.visible ? 5 : savedRecipeScreen.width / 4 + 10, 45);
+        savedRecipeScreen.recipeWidget.setWidth(savedRecipeScreen.list.visible ? savedRecipeScreen.width - 10 : savedRecipeScreen.width - (savedRecipeScreen.width / 4 + 15));
+        savedRecipeScreen.recipeWidget.setHeight(savedRecipeScreen.height - 50);
+        savedRecipeScreen.recipeWidget.setDrawsBackground(true);
+        savedRecipeScreen.minimize.setDimensionsAndPosition(20, 20, savedRecipeScreen.recipeWidget.getX() + savedRecipeScreen.recipeWidget.getWidth() - 30, savedRecipeScreen.recipeWidget.getY() + savedRecipeScreen.recipeWidget.getHeight() - 90);
+
+        return savedRecipeScreen;
     }
 
     @Override
@@ -288,6 +310,19 @@ public class RecipeScreen extends Screen {
 
         recipeWidget.visible = false;
 
+        minimize = new IconButtonWidget(recipeWidget.getX() + recipeWidget.getWidth() - 30, recipeWidget.getY() + recipeWidget.getHeight() - 90, 20, 20,
+                Identifier.of(MOD_ID, "textures/gui/minimize.png"),
+                Identifier.of(MOD_ID, "textures/gui/minimize-highlighted.png"),
+                btn -> {
+                    minimized = true;
+                    savedRecipeScreen = this;
+                    this.close();
+                }
+        );
+        minimize.setTooltip(Tooltip.of(Text.literal(languageModel.minimize())));
+        minimize.visible = false;
+
+        addDrawableChild(minimize);
         addDrawableChild(recipeWidget);
         addDrawableChild(search);
         addDrawableChild(settings);
@@ -298,10 +333,20 @@ public class RecipeScreen extends Screen {
     }
 
     @Override
+    protected void refreshWidgetPositions() {
+        if (savedRecipeScreen == null) {
+            super.refreshWidgetPositions();
+        } else {
+            savedRecipeScreen = null;
+        }
+    }
+
+    @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         if (search.mouseClicked(click, doubled) && !search.isMouseOverSearchField(click.x(), click.y())) {
             list.onPress(null);
             recipeWidget.visible = true;
+            minimize.visible = true;
             quantityField.setText("" + getQuantityByRarity(search.getSelectedSuggestion().rarity));
 
             return true;
@@ -395,6 +440,7 @@ public class RecipeScreen extends Screen {
         for (Element element : children()) {
             ((Drawable) element).render(context, mouseX, mouseY, deltaTicks);
         }
+        minimize.render(context, mouseX, mouseY, deltaTicks);
     }
 
     @Contract(pure = true)

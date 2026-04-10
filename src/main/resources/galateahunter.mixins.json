@@ -4,6 +4,8 @@
   "package": "ru.p4ejlov0d.galateahunter.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "screen.HandledScreenMixin",
+    "screen.InventoryRenderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

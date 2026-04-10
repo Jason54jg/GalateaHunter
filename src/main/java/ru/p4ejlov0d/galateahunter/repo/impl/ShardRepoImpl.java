@@ -49,7 +49,7 @@ public class ShardRepoImpl implements ShardRepo {
     public @Nullable File getShardData() {
         final File dataFile = new File(dataRootPath.resolve("fusion-data.json").toUri());
 
-        if (!Files.exists(dataFile.toPath())) {
+        if (!Files.exists(dataFile.toPath()) || REMOTE_REPOSITORY.isNeedUpdate()) {
             try {
                 LOGGER.info("Downloading shard data to {}", dataFile.getAbsolutePath());
                 FileUtils.copyURLToFile(remoteDataPath.toURL(), dataFile, 10000, 10000);

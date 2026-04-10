@@ -44,5 +44,7 @@
   "galateahunter.fusions": "Fusions",
   "galateahunter.quantity": "Quantity",
   "galateahunter.buy_cost": "Buy cost",
-  "galateahunter.fusion_cost": "Craft cost"
+  "galateahunter.fusion_cost": "Craft cost",
+  "galateahunter.minimize": "Minimize screen",
+  "galateahunter.maximize": "Maximize screen"
 }

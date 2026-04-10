@@ -44,5 +44,7 @@
   "galateahunter.fusions": "Крафты",
   "galateahunter.quantity": "Количество",
   "galateahunter.buy_cost": "Стоимость покупки",
-  "galateahunter.fusion_cost": "Стоимость крафта"
+  "galateahunter.fusion_cost": "Стоимость крафта",
+  "galateahunter.minimize": "Уменьшить окно",
+  "galateahunter.maximize": "Увеличить окно"
 }

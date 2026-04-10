@@ -61,7 +61,12 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
         if (this.content != null) {
             this.step = (int) Math.ceil((this.content.width + this.content.height) / 8D);
             this.zoomCeil = (this.content.width + this.content.height) * 8;
+            // centered
+            this.content.x = this.x + this.width / 2 - this.content.width / 2;
+            this.content.y = this.y + this.height / 2 - this.content.height / 2;
         }
+
+        updateInnerPositions();
     }
 
     @Contract(" -> new")
@@ -79,12 +84,13 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
         if (background != null && drawsBackground)
             context.drawTexture(RenderPipelines.GUI_TEXTURED, background, x, y, 0f, 0f, width, height, width, height);
 
+        if (isMouseOver(mouseX, mouseY)) context.setCursor(StandardCursors.RESIZE_ALL);
+
         if (content != null) {
             context.enableScissor(this.x, this.y, this.x + this.width, this.y + this.height);
             content.render(context, mouseX, mouseY, deltaTicks);
             context.disableScissor();
         }
-        if (isMouseOver(mouseX, mouseY)) context.setCursor(StandardCursors.RESIZE_ALL);
 
         if (zoomIn != null) zoomIn.render(context, mouseX, mouseY, deltaTicks);
         if (zoomOut != null) zoomOut.render(context, mouseX, mouseY, deltaTicks);
@@ -96,6 +102,7 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
         return visible && hovered && zoomIn != null && !zoomIn.mouseClicked(click, doubled) && zoomOut != null && !zoomOut.mouseClicked(click, doubled);
     }
 
+    // probably bug
     @Override
     public final boolean mouseReleased(Click click) {
         if (this.click.equals(click)) {
@@ -155,7 +162,7 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
         if (content.width == 0 || content.height == 0) return false;
 
         // save ratio
-        double k = (double) content.width / content.height;
+        final double k = (double) content.width / content.height;
 
         if (k < 1) content.width += (int) (step * k);
         else content.width += step;
@@ -195,6 +202,7 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
     @Override
     public void setX(int x) {
         this.x = x;
+        updateInnerPositions();
     }
 
     @Override
@@ -205,6 +213,7 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
     @Override
     public void setY(int y) {
         this.y = y;
+        updateInnerPositions();
     }
 
     @Override
@@ -214,6 +223,7 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
 
     public void setWidth(int width) {
         this.width = width;
+        updateInnerPositions();
     }
 
     @Override
@@ -223,6 +233,16 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
 
     public void setHeight(int height) {
         this.height = height;
+        updateInnerPositions();
+    }
+
+    public void updateInnerPositions() {
+        if (zoomIn != null) {
+            zoomIn.setPosition(this.x + this.width - 30, this.y + this.height - 60);
+        }
+        if (zoomOut != null) {
+            zoomOut.setPosition(this.x + this.width - 30, this.y + this.height - 30);
+        }
     }
 
     @Override
@@ -333,12 +353,6 @@ public class ScalableWidget implements Drawable, Widget, Element, Selectable {
 
                 if (zoomOutKeyName != null)
                     zoomOutButton.setTooltip(Tooltip.of(Text.literal(zoomOutKeyName).withColor(0xFF808080)));
-            }
-
-            // centered
-            if (this.content != null) {
-                this.content.x = this.x + this.width / 2 - this.content.width / 2;
-                this.content.y = this.y + this.height / 2 - this.content.height / 2;
             }
 
             return new ScalableWidget(

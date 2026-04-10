@@ -51,7 +51,9 @@ public record LanguageModel(
         @SerializedName("galateahunter.fusions") String fusions,
         @SerializedName("galateahunter.quantity") String quantity,
         @SerializedName("galateahunter.buy_cost") String buyCost,
-        @SerializedName("galateahunter.fusion_cost") String fusionCost
+        @SerializedName("galateahunter.fusion_cost") String fusionCost,
+        @SerializedName("galateahunter.minimize") String minimize,
+        @SerializedName("galateahunter.maximize") String maximize
 ) {
     public static @NotNull Text @NotNull [] toTexts(@NotNull String... descriptions) {
         return Arrays.stream(descriptions).map(Text::literal).toArray(Text[]::new);
