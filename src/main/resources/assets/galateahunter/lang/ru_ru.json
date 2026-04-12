@@ -20,7 +20,7 @@
   "galateahunter.enabled_bool": "Подключено",
   "galateahunter.disabled_bool": "Отключено",
   "galateahunter.beautiful_bazaar": "Красивая категория шардов в базаре",
-  "galateahunter.beautiful_bazaar_tooltip": "Измените категорию шардов в базаре на более красивый вид.\nСкоро добавится",
+  "galateahunter.beautiful_bazaar_tooltip": "Измените категорию шардов в базаре на более красивый вид",
   "galateahunter.reset_language": "Сброс языка",
   "galateahunter.reset_language_tooltip": "Смените язык мода на выбранный язык в майнкрафте",
   "galateahunter.reset_true": "Будет сброшено",
@@ -46,5 +46,6 @@
   "galateahunter.buy_cost": "Стоимость покупки",
   "galateahunter.fusion_cost": "Стоимость крафта",
   "galateahunter.minimize": "Уменьшить окно",
-  "galateahunter.maximize": "Увеличить окно"
+  "galateahunter.maximize": "Увеличить окно",
+  "galateahunter.unsupported": "Не поддерживается сейчас"
 }

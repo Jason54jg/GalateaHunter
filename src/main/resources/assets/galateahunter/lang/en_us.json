@@ -20,7 +20,7 @@
   "galateahunter.enabled_bool": "Enabled",
   "galateahunter.disabled_bool": "Disabled",
   "galateahunter.beautiful_bazaar": "Beautiful shard category in bazaar",
-  "galateahunter.beautiful_bazaar_tooltip": "Change the shard category in the bazaar to a more beautiful appearance.\nComing soon",
+  "galateahunter.beautiful_bazaar_tooltip": "Change the shard category in the bazaar to a more beautiful appearance",
   "galateahunter.reset_language": "Reset language",
   "galateahunter.reset_language_tooltip": "Change the mod language to your chosen language in minecraft",
   "galateahunter.reset_true": "Will be reset",
@@ -46,5 +46,6 @@
   "galateahunter.buy_cost": "Buy cost",
   "galateahunter.fusion_cost": "Craft cost",
   "galateahunter.minimize": "Minimize screen",
-  "galateahunter.maximize": "Maximize screen"
+  "galateahunter.maximize": "Maximize screen",
+  "galateahunter.unsupported": "Currently not supported"
 }

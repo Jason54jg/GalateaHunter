@@ -88,10 +88,11 @@ public class GalateaHunterScreen {
                 .build();
 
         final BooleanListEntry beautifulBazaarCategory = entryBuilder.startBooleanToggle(Text.literal(languageModel.beautifulBazaar()), config.isBeautifulBazaarCategoryEnabled)
-                .setDefaultValue(true)
+                .setDefaultValue(false)
                 .setSaveConsumer(bool -> config.isBeautifulBazaarCategoryEnabled = bool)
                 .setYesNoTextSupplier(bool -> bool ? Text.literal(languageModel.enabled()).withColor(Colors.GREEN) : Text.literal(languageModel.disabled()).withColor(Colors.LIGHT_RED))
-                .setTooltip(Text.literal(languageModel.beautifulBazaarTooltip()))
+                .setTooltip(/*Text.literal(languageModel.beautifulBazaarTooltip())*/ Text.literal(languageModel.unsupported()))
+                .setRequirement(() -> false) // unsupported
                 .build();
 
         final BooleanListEntry resetLanguage = entryBuilder.startBooleanToggle(Text.literal(languageModel.resetLanguage()), false)
@@ -126,17 +127,19 @@ public class GalateaHunterScreen {
         hunting.setDescription(LanguageModel.toTexts(languageModel.huntingDescriptions()));
 
         final BooleanListEntry huntingBoxToggle = entryBuilder.startBooleanToggle(Text.literal(languageModel.huntingBox()), config.tracking.isHuntingBoxEnabled)
-                .setDefaultValue(true)
+                .setDefaultValue(false)
                 .setSaveConsumer(bool -> config.tracking.isHuntingBoxEnabled = bool)
                 .setYesNoTextSupplier(bool -> bool ? Text.literal(languageModel.enabled()).withColor(Colors.GREEN) : Text.literal(languageModel.disabled()).withColor(Colors.LIGHT_RED))
-                .setTooltip(Text.literal(languageModel.huntingBoxTooltip()))
+                .setTooltip(/*Text.literal(languageModel.huntingBoxTooltip())*/ Text.literal(languageModel.unsupported()))
+                .setRequirement(() -> false) // unsupported
                 .build();
 
         final BooleanListEntry attributeMenuToggle = entryBuilder.startBooleanToggle(Text.literal(languageModel.attributeMenu()), config.tracking.isAttributeMenuEnabled)
-                .setDefaultValue(true)
+                .setDefaultValue(false)
                 .setSaveConsumer(bool -> config.tracking.isAttributeMenuEnabled = bool)
                 .setYesNoTextSupplier(bool -> bool ? Text.literal(languageModel.enabled()).withColor(Colors.GREEN) : Text.literal(languageModel.disabled()).withColor(Colors.LIGHT_RED))
-                .setTooltip(Text.literal(languageModel.attributeMenuTooltip()))
+                .setTooltip(/*Text.literal(languageModel.attributeMenuTooltip())*/ Text.literal(languageModel.unsupported()))
+                .setRequirement(() -> false) // unsupported
                 .build();
 
         final SubCategoryListEntry trackingSubCategory = entryBuilder.startSubCategory(Text.literal(languageModel.tracking()), List.of(huntingBoxToggle, attributeMenuToggle))

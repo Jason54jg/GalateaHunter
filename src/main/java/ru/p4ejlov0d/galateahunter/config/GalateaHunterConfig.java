@@ -16,18 +16,18 @@ public class GalateaHunterConfig implements ConfigData {
     @Comment("Default: null")
     public String languageCode = null;
 
-    @Comment("Default: true")
-    public boolean isBeautifulBazaarCategoryEnabled = true;
+    @Comment("Default: false")
+    public boolean isBeautifulBazaarCategoryEnabled = false;
 
     @Comment("Default: 0")
     public int imagesCount = 0;
 
     public static class Tracking {
-        @Comment("Default: true")
-        public boolean isHuntingBoxEnabled = true;
+        @Comment("Default: false")
+        public boolean isHuntingBoxEnabled = false;
 
-        @Comment("Default: true")
-        public boolean isAttributeMenuEnabled = true;
+        @Comment("Default: false")
+        public boolean isAttributeMenuEnabled = false;
     }
 
     public static class Recipe {
