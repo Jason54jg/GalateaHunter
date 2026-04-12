@@ -36,7 +36,7 @@ dependencies {
     testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
 
     // Source: https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:${project.jgit_version}"
+    include implementation("org.eclipse.jgit:org.eclipse.jgit:${project.jgit_version}")
 
     // Cloth Config
     include modImplementation("me.shedaniel.cloth:cloth-config-fabric:${cloth_config_version}")
