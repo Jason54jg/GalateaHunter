@@ -23,7 +23,7 @@ public class BazaarService extends AbstractService<BazaarRepo, Shard, ShardData>
     private BazaarService() {
         super(new BazaarRepoImpl());
 
-        WorkerManager.scheduleTask(this::load, 0, 600);
+        WorkerManager.scheduleRepeatingTask(this::load, 0, 600);
     }
 
     @Override

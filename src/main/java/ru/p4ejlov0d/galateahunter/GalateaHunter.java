@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import ru.p4ejlov0d.galateahunter.command.MainGuiCommand;
 import ru.p4ejlov0d.galateahunter.command.RecipeCommand;
 import ru.p4ejlov0d.galateahunter.utils.RemoteRepository;
+import ru.p4ejlov0d.galateahunter.utils.ServerUtil;
 import ru.p4ejlov0d.galateahunter.utils.config.ModConfigHolder;
 import ru.p4ejlov0d.galateahunter.utils.registries.CommandsRegistrar;
 import ru.p4ejlov0d.galateahunter.utils.registries.ResourceReloadRegistrar;
@@ -31,5 +32,6 @@ public class GalateaHunter implements ClientModInitializer {
         CommandsRegistrar.register(new RecipeCommand());
 
         ResourceReloadRegistrar.register();
+        ServerUtil.registerServerJoinListener();
     }
 }

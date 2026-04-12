@@ -73,12 +73,8 @@ public class LanguageResourceHandler implements SynchronousResourceReloader {
     }
 
     public @Nullable LanguageModel getLanguageModel() {
-        final Resource resource = Optional.ofNullable(
-                LANG_FILES.get(
-                        Optional.ofNullable(currentLangCode).orElseGet(
-                                () -> MinecraftClient.getInstance() != null ? MinecraftClient.getInstance().getLanguageManager().getLanguage() : null)
-                )
-        ).orElse(LANG_FILES.get("en_us"));
+        final Resource resource = Optional.ofNullable(LANG_FILES.get(getCurrentLangCode()))
+                .orElse(LANG_FILES.get("en_us"));
 
         try (BufferedReader reader = resource.getReader()) {
             final StringBuilder json = new StringBuilder();
@@ -93,6 +89,12 @@ public class LanguageResourceHandler implements SynchronousResourceReloader {
         }
 
         return null;
+    }
+
+    public @Nullable String getCurrentLangCode() {
+        return Optional.ofNullable(currentLangCode).orElseGet(
+                () -> MinecraftClient.getInstance() != null ? MinecraftClient.getInstance().getLanguageManager().getLanguage() : null
+        );
     }
 
     @Override

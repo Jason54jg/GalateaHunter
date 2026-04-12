@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SuppressWarnings("ALL")
 class WorkerManagerTest {
     @Test
-    void scheduleTask() {
+    void scheduleRepeatingTask() {
         final AtomicInteger test = new AtomicInteger();
-        WorkerManager.scheduleTask(test::incrementAndGet, 0, 2);
+        WorkerManager.scheduleRepeatingTask(test::incrementAndGet, 0, 2);
 
         try {
             Thread.sleep(2500);
@@ -19,5 +19,17 @@ class WorkerManagerTest {
             throw new RuntimeException(e);
         }
         assertEquals(2, test.get());
+    }
+
+    @Test
+    void scheduleTask() {
+        final AtomicInteger test = new AtomicInteger();
+        WorkerManager.scheduleTask(test::incrementAndGet, 2);
+        try {
+            Thread.sleep(2500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        assertEquals(1, test.get());
     }
 }
