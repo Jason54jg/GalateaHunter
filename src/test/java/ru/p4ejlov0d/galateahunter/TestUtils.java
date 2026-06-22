@@ -3,7 +3,7 @@ package ru.p4ejlov0d.galateahunter;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.impl.resource.pack.ModNioPackResources;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.resource.ResourceType;
+import net.minecraft.server.packs.PackType;
 import org.apache.commons.io.FileUtils;
 import ru.p4ejlov0d.galateahunter.service.ShardService;
 import ru.p4ejlov0d.galateahunter.utils.config.ModConfigHolder;
@@ -39,7 +39,7 @@ public class TestUtils {
 
     public static void loadShards() {
         ModConfigHolder.register();
-        ShardService.INSTANCE.setResourcePack(ModNioPackResources.create(MOD_ID, FabricLoader.getInstance().getModContainer(MOD_ID).get(), null, ResourceType.CLIENT_RESOURCES, null, false));
+        ShardService.INSTANCE.setResourcePack(ModNioPackResources.create(MOD_ID, FabricLoader.getInstance().getModContainer(MOD_ID).get(), null, PackType.CLIENT_RESOURCES, null, false));
         ShardService.INSTANCE.load().join();
     }
 }

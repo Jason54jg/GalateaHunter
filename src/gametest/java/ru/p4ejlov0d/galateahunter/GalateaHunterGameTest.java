@@ -4,16 +4,16 @@ import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.TestInput;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.world.WorldCreator;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.world.Difficulty;
 import org.jetbrains.annotations.NotNull;
 import ru.p4ejlov0d.galateahunter.model.Shard;
 import ru.p4ejlov0d.galateahunter.model.ShardData;
 import ru.p4ejlov0d.galateahunter.screen.RecipeScreen;
+import ru.p4ejlov0d.galateahunter.screen.widget.EditBoxWithSuggestions;
 import ru.p4ejlov0d.galateahunter.screen.widget.IconButtonWidget;
-import ru.p4ejlov0d.galateahunter.screen.widget.TextFieldWidgetWithSuggestions;
 import ru.p4ejlov0d.galateahunter.service.BazaarService;
 import ru.p4ejlov0d.galateahunter.service.ShardService;
 
@@ -25,7 +25,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
     public void runTest(ClientGameTestContext context) {
         try (TestSingleplayerContext singleplayerContext = context.worldBuilder()
                 .adjustSettings(worldCreator -> {
-                    worldCreator.setGameMode(WorldCreator.Mode.CREATIVE);
+                    worldCreator.setGameMode(WorldCreationUiState.SelectedGameMode.CREATIVE);
                     worldCreator.setDifficulty(Difficulty.PEACEFUL);
                 }).create()
         ) {
@@ -42,19 +42,19 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
     }
 
     private void recipeCommandWithoutArgsTest(@NotNull ClientGameTestContext context) {
-        context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe"));
+        context.runOnClient(client -> client.player.connection.sendCommand("ghrecipe"));
         context.waitForScreen(RecipeScreen.class);
     }
 
     private void recipeCommandWithArgsTest(@NotNull ClientGameTestContext context) {
         final String testText = "Wyvern Shard";
 
-        context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe " + testText));
+        context.runOnClient(client -> client.player.connection.sendCommand("ghrecipe " + testText));
         context.waitForScreen(RecipeScreen.class);
         context.waitFor(client -> {
-            for (Element el : client.currentScreen.children()) {
-                if (el instanceof TextFieldWidgetWithSuggestions child) {
-                    return child.getText().equals(testText);
+            for (GuiEventListener el : client.screen.children()) {
+                if (el instanceof EditBoxWithSuggestions child) {
+                    return child.getValue().equals(testText);
                 }
             }
 
@@ -63,12 +63,12 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
     }
 
     private void mainScreenCommandTest(@NotNull ClientGameTestContext context) {
-        context.runOnClient(client -> client.player.networkHandler.sendChatCommand("gh"));
+        context.runOnClient(client -> client.player.connection.sendCommand("gh"));
         context.waitForScreen(Screen.class);
     }
 
     private void recipeSelectTest(@NotNull ClientGameTestContext context) {
-        context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe Wither"));
+        context.runOnClient(client -> client.player.connection.sendCommand("ghrecipe Wither"));
         context.waitForScreen(RecipeScreen.class);
 
         final TestInput input = context.getInput();
@@ -79,9 +79,9 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         input.pressMouse(0);
 
         context.waitFor(client -> {
-            for (Element el : client.currentScreen.children()) {
-                if (el instanceof TextFieldWidgetWithSuggestions child) {
-                    return child.getText().equals("Wither Specter");
+            for (GuiEventListener el : client.screen.children()) {
+                if (el instanceof EditBoxWithSuggestions child) {
+                    return child.getValue().equals("Wither Specter");
                 }
             }
 
@@ -100,11 +100,11 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         input.holdKeyFor(0, 80);
         input.pressMouse(0);
 
-        context.waitFor(client -> !(client.currentScreen instanceof RecipeScreen || client.currentScreen == null));
+        context.waitFor(client -> !(client.screen instanceof RecipeScreen || client.screen == null));
     }
 
     private void recipeOverviewListButtonTest(@NotNull ClientGameTestContext context) {
-        context.runOnClient(client -> client.player.networkHandler.sendChatCommand("ghrecipe o"));
+        context.runOnClient(client -> client.player.connection.sendCommand("ghrecipe o"));
         context.waitForScreen(RecipeScreen.class);
 
         final TestInput input = context.getInput();
@@ -117,7 +117,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         input.pressMouse(0);
 
         context.waitFor(client -> {
-            if (!(client.currentScreen instanceof RecipeScreen recipeScreen)) return false;
+            if (!(client.screen instanceof RecipeScreen recipeScreen)) return false;
             try {
                 final Field close = recipeScreen.getClass().getDeclaredField("close");
                 close.setAccessible(true);

@@ -6,7 +6,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import ru.p4ejlov0d.galateahunter.model.Shard;
 import ru.p4ejlov0d.galateahunter.screen.RecipeScreen;
@@ -54,15 +54,15 @@ public class RecipeCommand implements Command {
     }
 
     private int openEmptyRecipeScreen(@NotNull CommandContext<FabricClientCommandSource> context) {
-        MinecraftClient client = context.getSource().getClient();
-        client.send(() -> client.setScreen(new RecipeScreen()));
+        Minecraft client = context.getSource().getClient();
+        client.schedule(() -> client.setScreen(new RecipeScreen()));
 
         return 1;
     }
 
     private int openFilledRecipeScreen(@NotNull CommandContext<FabricClientCommandSource> context) {
-        MinecraftClient client = context.getSource().getClient();
-        client.send(() -> client.setScreen(new RecipeScreen(StringArgumentType.getString(context, "recipe"))));
+        Minecraft client = context.getSource().getClient();
+        client.schedule(() -> client.setScreen(new RecipeScreen(StringArgumentType.getString(context, "recipe"))));
 
         return 1;
     }

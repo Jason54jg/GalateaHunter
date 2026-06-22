@@ -3,7 +3,7 @@ package ru.p4ejlov0d.galateahunter.model;
 import com.google.gson.annotations.SerializedName;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -56,7 +56,7 @@ public record LanguageModel(
         @SerializedName("galateahunter.maximize") String maximize,
         @SerializedName("galateahunter.unsupported") String unsupported
 ) {
-    public static @NotNull Text @NotNull [] toTexts(@NotNull String... descriptions) {
-        return Arrays.stream(descriptions).map(Text::literal).toArray(Text[]::new);
+    public static @NotNull Component @NotNull [] toTexts(@NotNull String... descriptions) {
+        return Arrays.stream(descriptions).map(Component::literal).toArray(Component[]::new);
     }
 }

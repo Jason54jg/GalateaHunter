@@ -4,7 +4,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import ru.p4ejlov0d.galateahunter.screen.GalateaHunterScreen;
 
@@ -17,8 +17,8 @@ public class MainGuiCommand implements Command {
     }
 
     private int execute(@NotNull CommandContext<FabricClientCommandSource> context) {
-        MinecraftClient client = context.getSource().getClient();
-        client.send(() -> client.setScreen(GalateaHunterScreen.createGui()));
+        Minecraft client = context.getSource().getClient();
+        client.schedule(() -> client.setScreen(GalateaHunterScreen.createGui()));
 
         return 1;
     }

@@ -1,17 +1,17 @@
 package ru.p4ejlov0d.galateahunter.screen.widget;
 
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.cursor.StandardCursors;
-import net.minecraft.client.gui.screen.ButtonTextures;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
@@ -22,14 +22,14 @@ import java.util.function.Function;
 
 @SuppressWarnings("unused")
 @Environment(EnvType.CLIENT)
-public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
+public class EditBoxWithSuggestions<E> extends EditBox {
     public final Consumer<String> DEFAULT_CHANGED_LISTENER;
 
     protected final Function<E, String> toStringFunction;
     protected final Function<E, Identifier> toTextureFunction;
     protected final Function<E, RenderableSuggestion> toSuggestionRender;
 
-    private final ButtonTextures textures;
+    private final WidgetSprites textures;
     private final List<E> need2BeVisible = new ArrayList<>();
     private final Map<E, Suggestion> children = new HashMap<>();
 
@@ -37,9 +37,9 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
     protected boolean drawsBackground;
     private E selectedSuggestion;
 
-    public TextFieldWidgetWithSuggestions(TextRenderer textRenderer, @Nullable Identifier normal, @Nullable Identifier focused, boolean drawsBackground, int x, int y, int width, int height, @Nullable Iterable<E> suggestions, @Nullable Text placeholder, @Nullable Function<E, String> toStringFunction, @Nullable Function<E, Identifier> toTextureFunction, @Nullable Function<E, RenderableSuggestion> toSuggestionRender) {
-        super(textRenderer, x, y, width, height, Text.empty());
-        this.textures = new ButtonTextures(normal, focused);
+    public EditBoxWithSuggestions(Font textRenderer, @Nullable Identifier normal, @Nullable Identifier focused, boolean drawsBackground, int x, int y, int width, int height, @Nullable Iterable<E> suggestions, @Nullable Component placeholder, @Nullable Function<E, String> toStringFunction, @Nullable Function<E, Identifier> toTextureFunction, @Nullable Function<E, RenderableSuggestion> toSuggestionRender) {
+        super(textRenderer, x, y, width, height, Component.empty());
+        this.textures = new WidgetSprites(normal, focused);
         this.suggestions = suggestions;
         this.drawsBackground = drawsBackground;
         this.toStringFunction = toStringFunction;
@@ -72,8 +72,8 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
         };
 
         super.setTextShadow(false);
-        if (placeholder != null) super.setPlaceholder(placeholder);
-        super.setChangedListener(this.DEFAULT_CHANGED_LISTENER);
+        if (placeholder != null) super.setHint(placeholder);
+        super.setResponder(this.DEFAULT_CHANGED_LISTENER);
     }
 
     // Influencing on super.render
@@ -84,26 +84,26 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
 
     // Influencing on super.render
     @Override
-    public boolean drawsBackground() {
+    public boolean isBordered() {
         return false;
     }
 
     @Override
-    public void renderWidget(@NonNull DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    public void renderWidget(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
         if (this.drawsBackground)
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, textures.get(isInteractable(), isFocused()), getX(), getY(), 0f, 0f, width, height, width, height);
+            context.blit(RenderPipelines.GUI_TEXTURED, textures.get(isActive(), isFocused()), getX(), getY(), 0f, 0f, width, height, width, height);
         super.renderWidget(context, mouseX, mouseY, deltaTicks);
 
         if (selectedSuggestion != null && toTextureFunction != null) {
             final int textureSize = height - 6;
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, toTextureFunction.apply(selectedSuggestion), getX() - height, getY() + height / 2 - textureSize / 2, 0f, 0f, textureSize, textureSize, textureSize, textureSize);
+            context.blit(RenderPipelines.GUI_TEXTURED, toTextureFunction.apply(selectedSuggestion), getX() - height, getY() + height / 2 - textureSize / 2, 0f, 0f, textureSize, textureSize, textureSize, textureSize);
         }
 
         if (active && isFocused()) renderSuggestion(context, getY() + height + 1, 0, mouseX, mouseY, deltaTicks);
     }
 
     @Override
-    public void onClick(@NonNull Click click, boolean doubled) {
+    public void onClick(@NonNull MouseButtonEvent click, boolean doubled) {
         final double x = click.x();
         final double y = click.y();
 
@@ -111,7 +111,7 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
             final List<E> savedNeed2BeVisible = List.copyOf(this.need2BeVisible);
             final Map<E, Suggestion> savedChildren = Map.copyOf(this.children);
 
-            super.setText("");
+            super.setValue("");
 
             this.need2BeVisible.addAll(savedNeed2BeVisible);
             this.children.putAll(savedChildren);
@@ -127,7 +127,7 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
     }
 
     @Override
-    protected void onDrag(Click click, double offsetX, double offsetY) {
+    protected void onDrag(@NonNull MouseButtonEvent click, double offsetX, double offsetY) {
     }
 
     @Override
@@ -142,14 +142,14 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
         return active && visible && mouseX >= getX() && mouseX < getX() + width && mouseY >= getY() && mouseY < getY() + height;
     }
 
-    private void renderSuggestion(DrawContext context, int y, int idx, int mouseX, int mouseY, float deltaTicks) {
+    private void renderSuggestion(GuiGraphics context, int y, int idx, int mouseX, int mouseY, float deltaTicks) {
         if (idx >= need2BeVisible.size()) return;
 
         final E element = need2BeVisible.get(idx);
 
         final Suggestion suggestion = new Suggestion(getX(), y, width, height, toSuggestionRender != null ? toSuggestionRender.apply(element) : null, btn -> {
             selectedSuggestion = element;
-            setText(toStringFunction != null ? toStringFunction.apply(element) : "");
+            setValue(toStringFunction != null ? toStringFunction.apply(element) : "");
             setSuggestion(null);
             setFocused(false);
         });
@@ -167,7 +167,7 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
     @FunctionalInterface
     @Environment(EnvType.CLIENT)
     public interface RenderableSuggestion {
-        void render(@NonNull DrawContext context, int x, int y, int width, int height, int mouseX, int mouseY, float deltaTicks);
+        void render(@NonNull GuiGraphics context, int x, int y, int width, int height, int mouseX, int mouseY, float deltaTicks);
     }
 
     @Environment(EnvType.CLIENT)
@@ -175,7 +175,7 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
         protected Identifier normal, focused;
         protected boolean drawsBackground = true;
         protected int x, y, width, height;
-        protected Text placeholder;
+        protected Component placeholder;
         protected Function<E, Identifier> toTextureFunction;
         protected Function<E, RenderableSuggestion> toSuggestionRender;
         protected Function<E, String> toStringFunction;
@@ -227,7 +227,7 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
             return this;
         }
 
-        public Builder<E> placeholder(Text placeholder) {
+        public Builder<E> placeholder(Component placeholder) {
             this.placeholder = placeholder;
             return this;
         }
@@ -247,8 +247,8 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
             return this;
         }
 
-        public TextFieldWidgetWithSuggestions<E> build(final @NotNull TextRenderer textRenderer, @Nullable Iterable<E> suggestions) {
-            return new TextFieldWidgetWithSuggestions<>(
+        public EditBoxWithSuggestions<E> build(final @NotNull Font textRenderer, @Nullable Iterable<E> suggestions) {
+            return new EditBoxWithSuggestions<>(
                     Objects.requireNonNull(textRenderer),
                     normal,
                     focused,
@@ -275,9 +275,9 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
             @Nullable RenderableSuggestion render,
             @Nullable Consumer<Suggestion> onPress
     ) {
-        void render(@NonNull DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+        void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
             if (render != null) render.render(context, x, y, width, height, mouseX, mouseY, deltaTicks);
-            if (isHovered(mouseX, mouseY)) context.setCursor(StandardCursors.POINTING_HAND);
+            if (isHovered(mouseX, mouseY)) context.requestCursor(CursorTypes.POINTING_HAND);
         }
 
         boolean isHovered(double mouseX, double mouseY) {
@@ -287,7 +287,7 @@ public class TextFieldWidgetWithSuggestions<E> extends TextFieldWidget {
         void press() {
             if (onPress != null) {
                 onPress.accept(this);
-                playClickSound(MinecraftClient.getInstance().getSoundManager());
+                playButtonClickSound(Minecraft.getInstance().getSoundManager());
             }
         }
     }

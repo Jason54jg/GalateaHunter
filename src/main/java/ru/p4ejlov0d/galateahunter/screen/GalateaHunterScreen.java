@@ -6,12 +6,12 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.gui.entries.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.resource.language.LanguageManager;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.LanguageManager;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.CommonColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.p4ejlov0d.galateahunter.config.GalateaHunterConfig;
@@ -28,7 +28,7 @@ import static ru.p4ejlov0d.galateahunter.GalateaHunter.VERSION;
 
 @Environment(EnvType.CLIENT)
 public class GalateaHunterScreen {
-    private static final Text TITLE = Text.literal(NAME + " v" + VERSION);
+    private static final Component TITLE = Component.literal(NAME + " v" + VERSION);
 
     private GalateaHunterScreen() {
     }
@@ -55,7 +55,7 @@ public class GalateaHunterScreen {
         // build empty
         if (languageModel == null) return configBuilder.build();
 
-        entryBuilder.setResetButtonKey(Text.literal(languageModel.reset()));
+        entryBuilder.setResetButtonKey(Component.literal(languageModel.reset()));
 
         // categories
         createGeneralCategory(configBuilder, languageModel, entryBuilder, languageResourceHandler, config);
@@ -64,47 +64,47 @@ public class GalateaHunterScreen {
         configBuilder.setSavingRunnable(ModConfigHolder::save);
 
         Optional.ofNullable(category).ifPresent(string -> {
-            if (configBuilder.hasCategory(Text.literal(string)))
-                configBuilder.setFallbackCategory(configBuilder.getOrCreateCategory(Text.literal(string)));
+            if (configBuilder.hasCategory(Component.literal(string)))
+                configBuilder.setFallbackCategory(configBuilder.getOrCreateCategory(Component.literal(string)));
         });
 
         return configBuilder.build();
     }
 
     private static void createGeneralCategory(@NotNull ConfigBuilder configBuilder, @NotNull final LanguageModel languageModel, @NotNull ConfigEntryBuilder entryBuilder, @NotNull LanguageResourceHandler languageResourceHandler, @NotNull GalateaHunterConfig config) {
-        ConfigCategory general = configBuilder.getOrCreateCategory(Text.literal(languageModel.generalCategory()));
+        ConfigCategory general = configBuilder.getOrCreateCategory(Component.literal(languageModel.generalCategory()));
         general.setDescription(LanguageModel.toTexts(languageModel.generalDescriptions()));
 
-        final SelectionListEntry<String> changeLanguage = entryBuilder.startSelector(Text.literal(languageModel.lang()), languageResourceHandler.loadLangNames(), languageModel.langName())
+        final SelectionListEntry<String> changeLanguage = entryBuilder.startSelector(Component.literal(languageModel.lang()), languageResourceHandler.loadLangNames(), languageModel.langName())
                 .setDefaultValue("English")
                 .setSaveConsumer(lang -> {
-                    LanguageManager langManager = MinecraftClient.getInstance().getLanguageManager();
-                    if (config.languageCode == null && langManager.getLanguage(langManager.getLanguage()).name().equals(lang)) {
+                    LanguageManager langManager = Minecraft.getInstance().getLanguageManager();
+                    if (config.languageCode == null && langManager.getLanguage(langManager.getSelected()).name().equals(lang)) {
                         return;
                     }
                     languageResourceHandler.changeLangCodeByLangName(lang);
                 })
-                .setTooltip(Text.literal(languageModel.languageTooltip()))
+                .setTooltip(Component.literal(languageModel.languageTooltip()))
                 .build();
 
-        final BooleanListEntry beautifulBazaarCategory = entryBuilder.startBooleanToggle(Text.literal(languageModel.beautifulBazaar()), config.isBeautifulBazaarCategoryEnabled)
+        final BooleanListEntry beautifulBazaarCategory = entryBuilder.startBooleanToggle(Component.literal(languageModel.beautifulBazaar()), config.isBeautifulBazaarCategoryEnabled)
                 .setDefaultValue(false)
                 .setSaveConsumer(bool -> config.isBeautifulBazaarCategoryEnabled = bool)
-                .setYesNoTextSupplier(bool -> bool ? Text.literal(languageModel.enabled()).withColor(Colors.GREEN) : Text.literal(languageModel.disabled()).withColor(Colors.LIGHT_RED))
-                .setTooltip(/*Text.literal(languageModel.beautifulBazaarTooltip())*/ Text.literal(languageModel.unsupported()))
+                .setYesNoTextSupplier(bool -> bool ? Component.literal(languageModel.enabled()).withColor(CommonColors.GREEN) : Component.literal(languageModel.disabled()).withColor(CommonColors.SOFT_RED))
+                .setTooltip(/*Text.literal(languageModel.beautifulBazaarTooltip())*/ Component.literal(languageModel.unsupported()))
                 .setRequirement(() -> false) // unsupported
                 .build();
 
-        final BooleanListEntry resetLanguage = entryBuilder.startBooleanToggle(Text.literal(languageModel.resetLanguage()), false)
+        final BooleanListEntry resetLanguage = entryBuilder.startBooleanToggle(Component.literal(languageModel.resetLanguage()), false)
                 .setDefaultValue(false)
                 .setSaveConsumer(bool -> {
                     if (bool) languageResourceHandler.changeLangCodeByLangName(null);
                 })
-                .setYesNoTextSupplier(bool -> bool ? Text.literal(languageModel.resetTrue()).withColor(Colors.LIGHT_RED) : Text.literal(languageModel.resetFalse()).withColor(Colors.GREEN))
-                .setTooltip(Text.literal(languageModel.resetLanguageTooltip()).setStyle(Style.EMPTY.withColor(Colors.LIGHT_YELLOW).withBold(true)))
+                .setYesNoTextSupplier(bool -> bool ? Component.literal(languageModel.resetTrue()).withColor(CommonColors.SOFT_RED) : Component.literal(languageModel.resetFalse()).withColor(CommonColors.GREEN))
+                .setTooltip(Component.literal(languageModel.resetLanguageTooltip()).setStyle(Style.EMPTY.withColor(CommonColors.SOFT_YELLOW).withBold(true)))
                 .build();
 
-        final BooleanListEntry resetSettings = entryBuilder.startBooleanToggle(Text.literal(languageModel.resetSettings()), false)
+        final BooleanListEntry resetSettings = entryBuilder.startBooleanToggle(Component.literal(languageModel.resetSettings()), false)
                 .setDefaultValue(false)
                 .setSaveConsumer(bool -> {
                     if (bool) {
@@ -112,8 +112,8 @@ public class GalateaHunterScreen {
                         ModConfigHolder.reset();
                     }
                 })
-                .setYesNoTextSupplier(bool -> bool ? Text.literal(languageModel.resetTrue()).styled(style -> style.withColor(Colors.RED).withBold(true)) : Text.literal(languageModel.resetFalse()).withColor(Colors.GREEN))
-                .setTooltip(Text.literal(languageModel.resetSettingsTooltip()).setStyle(Style.EMPTY.withColor(Colors.YELLOW).withBold(true)))
+                .setYesNoTextSupplier(bool -> bool ? Component.literal(languageModel.resetTrue()).withStyle(style -> style.withColor(CommonColors.RED).withBold(true)) : Component.literal(languageModel.resetFalse()).withColor(CommonColors.GREEN))
+                .setTooltip(Component.literal(languageModel.resetSettingsTooltip()).setStyle(Style.EMPTY.withColor(CommonColors.YELLOW).withBold(true)))
                 .build();
 
         general.addEntry(changeLanguage);
@@ -123,52 +123,52 @@ public class GalateaHunterScreen {
     }
 
     private static void createHuntingCategory(@NotNull ConfigBuilder configBuilder, @NotNull final LanguageModel languageModel, @NotNull ConfigEntryBuilder entryBuilder, @NotNull GalateaHunterConfig config) {
-        ConfigCategory hunting = configBuilder.getOrCreateCategory(Text.literal(languageModel.huntingCategory()));
+        ConfigCategory hunting = configBuilder.getOrCreateCategory(Component.literal(languageModel.huntingCategory()));
         hunting.setDescription(LanguageModel.toTexts(languageModel.huntingDescriptions()));
 
-        final BooleanListEntry huntingBoxToggle = entryBuilder.startBooleanToggle(Text.literal(languageModel.huntingBox()), config.tracking.isHuntingBoxEnabled)
+        final BooleanListEntry huntingBoxToggle = entryBuilder.startBooleanToggle(Component.literal(languageModel.huntingBox()), config.tracking.isHuntingBoxEnabled)
                 .setDefaultValue(false)
                 .setSaveConsumer(bool -> config.tracking.isHuntingBoxEnabled = bool)
-                .setYesNoTextSupplier(bool -> bool ? Text.literal(languageModel.enabled()).withColor(Colors.GREEN) : Text.literal(languageModel.disabled()).withColor(Colors.LIGHT_RED))
-                .setTooltip(/*Text.literal(languageModel.huntingBoxTooltip())*/ Text.literal(languageModel.unsupported()))
+                .setYesNoTextSupplier(bool -> bool ? Component.literal(languageModel.enabled()).withColor(CommonColors.GREEN) : Component.literal(languageModel.disabled()).withColor(CommonColors.SOFT_RED))
+                .setTooltip(/*Text.literal(languageModel.huntingBoxTooltip())*/ Component.literal(languageModel.unsupported()))
                 .setRequirement(() -> false) // unsupported
                 .build();
 
-        final BooleanListEntry attributeMenuToggle = entryBuilder.startBooleanToggle(Text.literal(languageModel.attributeMenu()), config.tracking.isAttributeMenuEnabled)
+        final BooleanListEntry attributeMenuToggle = entryBuilder.startBooleanToggle(Component.literal(languageModel.attributeMenu()), config.tracking.isAttributeMenuEnabled)
                 .setDefaultValue(false)
                 .setSaveConsumer(bool -> config.tracking.isAttributeMenuEnabled = bool)
-                .setYesNoTextSupplier(bool -> bool ? Text.literal(languageModel.enabled()).withColor(Colors.GREEN) : Text.literal(languageModel.disabled()).withColor(Colors.LIGHT_RED))
-                .setTooltip(/*Text.literal(languageModel.attributeMenuTooltip())*/ Text.literal(languageModel.unsupported()))
+                .setYesNoTextSupplier(bool -> bool ? Component.literal(languageModel.enabled()).withColor(CommonColors.GREEN) : Component.literal(languageModel.disabled()).withColor(CommonColors.SOFT_RED))
+                .setTooltip(/*Text.literal(languageModel.attributeMenuTooltip())*/ Component.literal(languageModel.unsupported()))
                 .setRequirement(() -> false) // unsupported
                 .build();
 
-        final SubCategoryListEntry trackingSubCategory = entryBuilder.startSubCategory(Text.literal(languageModel.tracking()), List.of(huntingBoxToggle, attributeMenuToggle))
-                .setTooltip(Text.literal(languageModel.trackingTooltip()))
+        final SubCategoryListEntry trackingSubCategory = entryBuilder.startSubCategory(Component.literal(languageModel.tracking()), List.of(huntingBoxToggle, attributeMenuToggle))
+                .setTooltip(Component.literal(languageModel.trackingTooltip()))
                 .build();
 
-        final IntegerSliderEntry crocodileLevelInput = entryBuilder.startIntSlider(Text.literal(languageModel.crocodile()), config.recipe.crocodileLevel, 0, 10)
+        final IntegerSliderEntry crocodileLevelInput = entryBuilder.startIntSlider(Component.literal(languageModel.crocodile()), config.recipe.crocodileLevel, 0, 10)
                 .setDefaultValue(0)
                 .setSaveConsumer(level -> config.recipe.crocodileLevel = level)
                 .build();
 
-        final IntegerSliderEntry seaSerpentLevelInput = entryBuilder.startIntSlider(Text.literal(languageModel.seaSerpent()), config.recipe.seaSerpentLevel, 0, 10)
+        final IntegerSliderEntry seaSerpentLevelInput = entryBuilder.startIntSlider(Component.literal(languageModel.seaSerpent()), config.recipe.seaSerpentLevel, 0, 10)
                 .setDefaultValue(0)
                 .setSaveConsumer(level -> config.recipe.seaSerpentLevel = level)
                 .build();
 
-        final IntegerSliderEntry tiamatLevelInput = entryBuilder.startIntSlider(Text.literal(languageModel.tiamat()), config.recipe.tiamatLevel, 0, 10)
+        final IntegerSliderEntry tiamatLevelInput = entryBuilder.startIntSlider(Component.literal(languageModel.tiamat()), config.recipe.tiamatLevel, 0, 10)
                 .setDefaultValue(0)
                 .setSaveConsumer(level -> config.recipe.tiamatLevel = level)
                 .build();
 
-        final EnumListEntry<Enums.BazaarStrategy> bazaarStrategy = entryBuilder.startEnumSelector(Text.literal(languageModel.bazaarStrategy()), Enums.BazaarStrategy.class, config.recipe.bazaarStrategy)
+        final EnumListEntry<Enums.BazaarStrategy> bazaarStrategy = entryBuilder.startEnumSelector(Component.literal(languageModel.bazaarStrategy()), Enums.BazaarStrategy.class, config.recipe.bazaarStrategy)
                 .setDefaultValue(Enums.BazaarStrategy.BUY_OFFER)
                 .setSaveConsumer(strategy -> config.recipe.bazaarStrategy = strategy)
                 .build();
 
-        final SubCategoryListEntry recipeSubCategory = entryBuilder.startSubCategory(Text.literal(languageModel.recipe()), List.of(crocodileLevelInput, seaSerpentLevelInput, tiamatLevelInput, bazaarStrategy))
+        final SubCategoryListEntry recipeSubCategory = entryBuilder.startSubCategory(Component.literal(languageModel.recipe()), List.of(crocodileLevelInput, seaSerpentLevelInput, tiamatLevelInput, bazaarStrategy))
                 .setExpanded(true)
-                .setTooltip(Text.literal(languageModel.recipeTooltip()))
+                .setTooltip(Component.literal(languageModel.recipeTooltip()))
                 .build();
 
         hunting.addEntry(trackingSubCategory);
