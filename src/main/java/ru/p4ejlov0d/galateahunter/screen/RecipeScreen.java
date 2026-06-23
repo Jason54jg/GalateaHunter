@@ -2,7 +2,7 @@ package ru.p4ejlov0d.galateahunter.screen;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.Tooltip;
@@ -112,8 +112,8 @@ public class RecipeScreen extends Screen {
 
                     context.blit(RenderPipelines.GUI_TEXTURED, textures.get(true, hovered), x, y, 0f, 0f, width, height, width, height);
                     context.blit(RenderPipelines.GUI_TEXTURED, shard.texture, x + 4, y + 2, 0f, 0f, height - 6, height - 6, height - 6, height - 6);
-                    context.drawString(font, Component.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Component.literal(" (" + shard.id.toUpperCase() + ")").withColor(0xFF808080)), x + height + 2, y + height - height * 85 / 100, 0xFFFFFFFF, false);
-                    context.drawString(font, shard.family, x + height + 2, y + height * 62 / 100, 0xFFFFFFFF, false);
+                    context.text(font, Component.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Component.literal(" (" + shard.id.toUpperCase() + ")").withColor(0xFF808080)), x + height + 2, y + height - height * 85 / 100, 0xFFFFFFFF, false);
+                    context.text(font, shard.family, x + height + 2, y + height * 62 / 100, 0xFFFFFFFF, false);
                 })
                 .toStringFunction(shard -> shard.name)
                 .build(font, shardService.getShards());
@@ -126,7 +126,7 @@ public class RecipeScreen extends Screen {
         final IconButtonWidget settings = new IconButtonWidget(width - 30, 10, 20, 20,
                 Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/settings.png"),
                 Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/settings-highlighted.png"),
-                btn -> minecraft.setScreen(GalateaHunterScreen.createGui(this, languageModel.huntingCategory()))
+                btn -> minecraft.gui.setScreen(GalateaHunterScreen.createGui(this, languageModel.huntingCategory()))
         );
 
         final IconButtonWidget update = new IconButtonWidget(width - 55, 10, 20, 20,
@@ -266,11 +266,11 @@ public class RecipeScreen extends Screen {
 
                         context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/" + shard.rarity + ".png"), x, y, 0f, 0f, nodeWidth, nodeHeight, nodeWidth, nodeHeight);
                         context.blit(RenderPipelines.GUI_TEXTURED, shard.texture, startX, startY, 0f, 0f, textureSize, textureSize, textureSize, textureSize);
-                        context.drawString(font, Component.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Component.literal(" x" + fusionData.quantity).withColor(0xFF808080)), textX, startY, 0xFFFFFFFF, false);
+                        context.text(font, Component.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Component.literal(" x" + fusionData.quantity).withColor(0xFF808080)), textX, startY, 0xFFFFFFFF, false);
 
                         if (hasChildren) {
-                            context.drawString(font, Component.literal(languageModel.fusions() + ": " + fusionData.fusionQuantity), textX, startY + 11, 0xFFFFFFFF, false);
-                            context.drawString(font, Component.literal(languageModel.totalReptiles() + ": " + fusionData.pureReptiles), textX, startY + 22, 0xFFFFFFFF, false);
+                            context.text(font, Component.literal(languageModel.fusions() + ": " + fusionData.fusionQuantity), textX, startY + 11, 0xFFFFFFFF, false);
+                            context.text(font, Component.literal(languageModel.totalReptiles() + ": " + fusionData.pureReptiles), textX, startY + 22, 0xFFFFFFFF, false);
 
                             final var left = node.children.getFirst();
                             final var right = node.children.getLast();
@@ -285,8 +285,8 @@ public class RecipeScreen extends Screen {
 
                             final Component fusionCost = Component.literal(languageModel.fusionCost() + ": ").append(getPrettyCoins(recipeService.getCheapestRecipePrice(shard))).withColor(0xFF808080);
 
-                            context.drawString(font, fusionCost, nodeCenterX - font.width(fusionCost) - 3, lineCenterY - 10, 0xFFFFFFFF, false);
-                            context.drawString(font, Component.literal(languageModel.buyCost() + ": ").append(getPrettyCoins(bazaarService.getPrice(shard, 1))).withColor(0xFF808080), nodeCenterX + 3, lineCenterY - 10, 0xFFFFFFFF, false);
+                            context.text(font, fusionCost, nodeCenterX - font.width(fusionCost) - 3, lineCenterY - 10, 0xFFFFFFFF, false);
+                            context.text(font, Component.literal(languageModel.buyCost() + ": ").append(getPrettyCoins(bazaarService.getPrice(shard, 1))).withColor(0xFF808080), nodeCenterX + 3, lineCenterY - 10, 0xFFFFFFFF, false);
 
                             context.fill(nodeCenterX - 1, nodeCenterY, nodeCenterX + 1, lineCenterY, getColorByRarity(shard.rarity));
 
@@ -297,8 +297,8 @@ public class RecipeScreen extends Screen {
                             context.fill(leftCenterX - 1, lineCenterY, leftCenterX + 1, leftCenterY, getColorByRarity(left.key.rarity));
                             context.fill(rightCenterX - 1, lineCenterY, rightCenterX + 1, rightCenterY, getColorByRarity(right.key.rarity));
                         } else {
-                            context.drawString(font, Component.literal(languageModel.quantity() + ": " + fusionData.quantity), textX, startY + 11, 0xFFFFFFFF, false);
-                            context.drawString(font, Component.literal(languageModel.buyCost() + ": ").append(getPrettyCoins(fusionData.price)), textX, startY + 22, 0xFFFFFFFF, false);
+                            context.text(font, Component.literal(languageModel.quantity() + ": " + fusionData.quantity), textX, startY + 11, 0xFFFFFFFF, false);
+                            context.text(font, Component.literal(languageModel.buyCost() + ": ").append(getPrettyCoins(fusionData.price)), textX, startY + 22, 0xFFFFFFFF, false);
                         }
                     }
                 })
@@ -355,13 +355,13 @@ public class RecipeScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+    public void extractBackground(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
         context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/background-screen.png"), 0, 0, 0f, 0f, width, height, width, height);
     }
 
     @Override
-    public void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
-        renderBlurredBackground(context);
+    public void extractRenderState(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
+        extractBlurredBackground(context);
 
         // header
         final Identifier header = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/header.png");
@@ -398,7 +398,7 @@ public class RecipeScreen extends Screen {
 
             context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 45, 0f, 0f, width / 4, 30, width / 4, 30);
             context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/target.png"), 10, 50, 0f, 0f, 20, 20, 20, 20);
-            context.drawString(font, Component.literal(languageModel.overview()).withStyle(style -> style.withBold(true)), 35, 50, 0xFFFFFFFF, false);
+            context.text(font, Component.literal(languageModel.overview()).withStyle(style -> style.withBold(true)), 35, 50, 0xFFFFFFFF, false);
 
             int offset = 35;
             for (Map.Entry<Shard, Integer> entry : overview.entrySet()) {
@@ -407,40 +407,40 @@ public class RecipeScreen extends Screen {
                 final Component quantityString = Component.literal(String.valueOf(quantity));
 
                 context.blit(RenderPipelines.GUI_TEXTURED, shard.texture, offset, 58, 0f, 0f, 7, 7, 7, 7);
-                context.drawString(font, quantityString, offset, 67, 0xFFFFFFFF, false);
+                context.text(font, quantityString, offset, 67, 0xFFFFFFFF, false);
 
                 offset += font.width(quantityString) + 5;
             }
 
             context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 80, 0f, 0f, width / 4, 30, width / 4, 30);
             context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/dollar.png"), 10, 85, 0f, 0f, 20, 20, 20, 20);
-            context.drawString(font, Component.literal(languageModel.totalCoins()).withStyle(style -> style.withBold(true)), 35, 85, 0xFFFFFFFF, false);
-            context.drawString(font, getPrettyCoins(totalCoins.get()), 35, 97, 0xFFFFFFFF, false);
+            context.text(font, Component.literal(languageModel.totalCoins()).withStyle(style -> style.withBold(true)), 35, 85, 0xFFFFFFFF, false);
+            context.text(font, getPrettyCoins(totalCoins.get()), 35, 97, 0xFFFFFFFF, false);
 
             context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 115, 0f, 0f, width / 4, 30, width / 4, 30);
             context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/stonks.png"), 10, 120, 0f, 0f, 20, 20, 20, 20);
-            context.drawString(font, Component.literal(languageModel.coinsSaved()).withStyle(style -> style.withBold(true)), 35, 120, 0xFFFFFFFF, false);
-            context.drawString(font, getPrettyCoins(bazaarService.getPrice(tree.root.key, tree.root.value.quantity) - Long.parseLong(totalCoins.toString())), 35, 132, 0xFFFFFFFF, false);
+            context.text(font, Component.literal(languageModel.coinsSaved()).withStyle(style -> style.withBold(true)), 35, 120, 0xFFFFFFFF, false);
+            context.text(font, getPrettyCoins(bazaarService.getPrice(tree.root.key, tree.root.value.quantity) - Long.parseLong(totalCoins.toString())), 35, 132, 0xFFFFFFFF, false);
 
             context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 150, 0f, 0f, width / 4, 30, width / 4, 30);
             context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/prismarine-shard.png"), 10, 155, 0f, 0f, 20, 20, 20, 20);
-            context.drawString(font, Component.literal(languageModel.totalShards()).withStyle(style -> style.withBold(true)), 35, 155, 0xFFFFFFFF, false);
+            context.text(font, Component.literal(languageModel.totalShards()).withStyle(style -> style.withBold(true)), 35, 155, 0xFFFFFFFF, false);
 
             context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 185, 0f, 0f, width / 4, 30, width / 4, 30);
             context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/loop.png"), 10, 190, 0f, 0f, 20, 20, 20, 20);
-            context.drawString(font, Component.literal(languageModel.totalFusions()).withStyle(style -> style.withBold(true)), 35, 190, 0xFFFFFFFF, false);
-            context.drawString(font, Component.literal(totalFusions.toString()), 35, 202, 0xFFFFFFFF, false);
+            context.text(font, Component.literal(languageModel.totalFusions()).withStyle(style -> style.withBold(true)), 35, 190, 0xFFFFFFFF, false);
+            context.text(font, Component.literal(totalFusions.toString()), 35, 202, 0xFFFFFFFF, false);
 
             context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 220, 0f, 0f, width / 4, 30, width / 4, 30);
             context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/reptile.png"), 10, 225, 0f, 0f, 20, 20, 20, 20);
-            context.drawString(font, Component.literal(languageModel.totalReptiles()).withStyle(style -> style.withBold(true)), 35, 225, 0xFFFFFFFF, false);
-            context.drawString(font, Component.literal(totalReptiles.toString()), 35, 237, 0xFFFFFFFF, false);
+            context.text(font, Component.literal(languageModel.totalReptiles()).withStyle(style -> style.withBold(true)), 35, 225, 0xFFFFFFFF, false);
+            context.text(font, Component.literal(totalReptiles.toString()), 35, 237, 0xFFFFFFFF, false);
         }
 
         for (GuiEventListener element : children()) {
-            ((Renderable) element).render(context, mouseX, mouseY, deltaTicks);
+            ((Renderable) element).extractRenderState(context, mouseX, mouseY, deltaTicks);
         }
-        minimize.render(context, mouseX, mouseY, deltaTicks);
+        minimize.extractRenderState(context, mouseX, mouseY, deltaTicks);
     }
 
     @Contract(pure = true)

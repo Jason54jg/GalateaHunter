@@ -3,7 +3,7 @@ package ru.p4ejlov0d.galateahunter.mixin.screen;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -63,19 +63,19 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 
             maximize = new IconButtonWidget(width - 30, height - 90, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/maximize.png"), Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/maximize-highlighted.png"), btn -> {
                 RecipeScreen.minimized = false;
-                minecraft.setScreen(RecipeScreen.restoreScreen());
+                minecraft.gui.setScreen(RecipeScreen.restoreScreen());
             });
             if (languageModel != null) maximize.setTooltip(Tooltip.create(Component.literal(languageModel.maximize())));
         }
     }
 
-    @Inject(method = "render", at = @At("HEAD"))
-    private void render(GuiGraphics context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    private void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
         if (recipeWidget != null) {
-            recipeWidget.render(context, mouseX, mouseY, deltaTicks);
-            if (!hasClickedOutside(mouseX, mouseY, leftPos, topPos)) context.requestCursor(CursorTypes.ARROW);
+            recipeWidget.extractRenderState(graphics, mouseX, mouseY, deltaTicks);
+            if (!hasClickedOutside(mouseX, mouseY, leftPos, topPos)) graphics.requestCursor(CursorTypes.ARROW);
         }
-        if (maximize != null) maximize.render(context, mouseX, mouseY, deltaTicks);
+        if (maximize != null) maximize.extractRenderState(graphics, mouseX, mouseY, deltaTicks);
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"))

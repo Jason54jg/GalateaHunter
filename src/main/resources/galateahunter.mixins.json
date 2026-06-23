@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "ru.p4ejlov0d.galateahunter.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "client": [
     "screen.AbstractContainerScreenMixin"
   ],

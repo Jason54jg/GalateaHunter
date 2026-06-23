@@ -47,7 +47,7 @@ public final class ServerUtil {
                             name.append(Component.literal("Use '/gh' to open mod settings and '/ghrecipe (Optional: shard name)' to open recipe menu.").withColor(0xFFFFFFFF));
                 };
 
-                client.player.displayClientMessage(message, false);
+                client.player.sendSystemMessage(message);
                 messageSent = true;
             }
         }

@@ -3,8 +3,8 @@ package ru.p4ejlov0d.galateahunter.command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +45,8 @@ public class RecipeCommand implements Command {
     @Override
     public void register() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess)
-                -> dispatcher.register(ClientCommandManager.literal("ghrecipe").executes(this::openEmptyRecipeScreen)
-                .then(ClientCommandManager.argument("recipe", StringArgumentType.greedyString())
+                -> dispatcher.register(ClientCommands.literal("ghrecipe").executes(this::openEmptyRecipeScreen)
+                .then(ClientCommands.argument("recipe", StringArgumentType.greedyString())
                         .suggests(shardSuggestionProvider)
                         .executes(this::openFilledRecipeScreen)
                 )
@@ -55,14 +55,14 @@ public class RecipeCommand implements Command {
 
     private int openEmptyRecipeScreen(@NotNull CommandContext<FabricClientCommandSource> context) {
         Minecraft client = context.getSource().getClient();
-        client.schedule(() -> client.setScreen(new RecipeScreen()));
+        client.schedule(() -> client.gui.setScreen(new RecipeScreen()));
 
         return 1;
     }
 
     private int openFilledRecipeScreen(@NotNull CommandContext<FabricClientCommandSource> context) {
         Minecraft client = context.getSource().getClient();
-        client.schedule(() -> client.setScreen(new RecipeScreen(StringArgumentType.getString(context, "recipe"))));
+        client.schedule(() -> client.gui.setScreen(new RecipeScreen(StringArgumentType.getString(context, "recipe"))));
 
         return 1;
     }

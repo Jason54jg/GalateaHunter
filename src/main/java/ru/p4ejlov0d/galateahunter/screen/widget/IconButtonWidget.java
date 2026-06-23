@@ -2,7 +2,7 @@ package ru.p4ejlov0d.galateahunter.screen.widget;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -38,7 +38,7 @@ public class IconButtonWidget extends AbstractButton {
     }
 
     @Override
-    protected void renderContents(@NotNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+    protected void extractContents(@NotNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
         context.blit(RenderPipelines.GUI_TEXTURED, textures.get(isActive(), isHovered()), getX(), getY(), 0f, 0f, width, height, width, height);
     }
 

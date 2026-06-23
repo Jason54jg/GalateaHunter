@@ -5,7 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -89,10 +89,10 @@ public class EditBoxWithSuggestions<E> extends EditBox {
     }
 
     @Override
-    public void renderWidget(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+    public void extractWidgetRenderState(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
         if (this.drawsBackground)
             context.blit(RenderPipelines.GUI_TEXTURED, textures.get(isActive(), isFocused()), getX(), getY(), 0f, 0f, width, height, width, height);
-        super.renderWidget(context, mouseX, mouseY, deltaTicks);
+        super.extractWidgetRenderState(context, mouseX, mouseY, deltaTicks);
 
         if (selectedSuggestion != null && toTextureFunction != null) {
             final int textureSize = height - 6;
@@ -142,7 +142,7 @@ public class EditBoxWithSuggestions<E> extends EditBox {
         return active && visible && mouseX >= getX() && mouseX < getX() + width && mouseY >= getY() && mouseY < getY() + height;
     }
 
-    private void renderSuggestion(GuiGraphics context, int y, int idx, int mouseX, int mouseY, float deltaTicks) {
+    private void renderSuggestion(GuiGraphicsExtractor context, int y, int idx, int mouseX, int mouseY, float deltaTicks) {
         if (idx >= need2BeVisible.size()) return;
 
         final E element = need2BeVisible.get(idx);
@@ -167,7 +167,7 @@ public class EditBoxWithSuggestions<E> extends EditBox {
     @FunctionalInterface
     @Environment(EnvType.CLIENT)
     public interface RenderableSuggestion {
-        void render(@NonNull GuiGraphics context, int x, int y, int width, int height, int mouseX, int mouseY, float deltaTicks);
+        void render(@NonNull GuiGraphicsExtractor context, int x, int y, int width, int height, int mouseX, int mouseY, float deltaTicks);
     }
 
     @Environment(EnvType.CLIENT)
@@ -275,7 +275,7 @@ public class EditBoxWithSuggestions<E> extends EditBox {
             @Nullable RenderableSuggestion render,
             @Nullable Consumer<Suggestion> onPress
     ) {
-        void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+        void render(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
             if (render != null) render.render(context, x, y, width, height, mouseX, mouseY, deltaTicks);
             if (isHovered(mouseX, mouseY)) context.requestCursor(CursorTypes.POINTING_HAND);
         }

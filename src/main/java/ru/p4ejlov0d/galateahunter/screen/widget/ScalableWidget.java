@@ -3,7 +3,7 @@ package ru.p4ejlov0d.galateahunter.screen.widget;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.Tooltip;
@@ -84,7 +84,7 @@ public class ScalableWidget implements Renderable, LayoutElement, GuiEventListen
     }
 
     @Override
-    public final void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+    public final void extractRenderState(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
         if (!visible) return;
         if (background != null && drawsBackground)
             context.blit(RenderPipelines.GUI_TEXTURED, background, x, y, 0f, 0f, width, height, width, height);
@@ -93,12 +93,12 @@ public class ScalableWidget implements Renderable, LayoutElement, GuiEventListen
 
         if (content != null) {
             context.enableScissor(this.x, this.y, this.x + this.width, this.y + this.height);
-            content.render(context, mouseX, mouseY, deltaTicks);
+            content.extractRenderState(context, mouseX, mouseY, deltaTicks);
             context.disableScissor();
         }
 
-        if (zoomIn != null) zoomIn.render(context, mouseX, mouseY, deltaTicks);
-        if (zoomOut != null) zoomOut.render(context, mouseX, mouseY, deltaTicks);
+        if (zoomIn != null) zoomIn.extractRenderState(context, mouseX, mouseY, deltaTicks);
+        if (zoomOut != null) zoomOut.extractRenderState(context, mouseX, mouseY, deltaTicks);
     }
 
     @Override
@@ -393,7 +393,7 @@ public class ScalableWidget implements Renderable, LayoutElement, GuiEventListen
         }
 
         @Override
-        public void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+        public void extractRenderState(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
             if (render != null) render.render(this, context, mouseX, mouseY, deltaTicks);
         }
 
@@ -416,7 +416,7 @@ public class ScalableWidget implements Renderable, LayoutElement, GuiEventListen
         @FunctionalInterface
         @Environment(EnvType.CLIENT)
         public interface DrawableContent {
-            void render(Content content, GuiGraphics context, int mouseX, int mouseY, float deltaTicks);
+            void render(Content content, GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks);
         }
     }
 }

@@ -29,7 +29,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
                     worldCreator.setDifficulty(Difficulty.PEACEFUL);
                 }).create()
         ) {
-            singleplayerContext.getClientWorld().waitForChunksRender();
+            singleplayerContext.getClientLevel().waitForChunksRender();
 
             recipeCommandWithoutArgsTest(context);
             recipeCommandWithArgsTest(context);
@@ -52,7 +52,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         context.runOnClient(client -> client.player.connection.sendCommand("ghrecipe " + testText));
         context.waitForScreen(RecipeScreen.class);
         context.waitFor(client -> {
-            for (GuiEventListener el : client.screen.children()) {
+            for (GuiEventListener el : client.gui.screen().children()) {
                 if (el instanceof EditBoxWithSuggestions child) {
                     return child.getValue().equals(testText);
                 }
@@ -79,7 +79,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         input.pressMouse(0);
 
         context.waitFor(client -> {
-            for (GuiEventListener el : client.screen.children()) {
+            for (GuiEventListener el : client.gui.screen().children()) {
                 if (el instanceof EditBoxWithSuggestions child) {
                     return child.getValue().equals("Wither Specter");
                 }
@@ -90,7 +90,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
     }
 
     private void recipeSettingsButtonTest(@NotNull ClientGameTestContext context) {
-        context.runOnClient(client -> client.setScreen(new RecipeScreen()));
+        context.runOnClient(client -> client.gui.setScreen(new RecipeScreen()));
         context.waitForScreen(RecipeScreen.class);
 
         final TestInput input = context.getInput();
@@ -100,7 +100,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         input.holdKeyFor(0, 80);
         input.pressMouse(0);
 
-        context.waitFor(client -> !(client.screen instanceof RecipeScreen || client.screen == null));
+        context.waitFor(client -> !(client.gui.screen() instanceof RecipeScreen || client.gui.screen() == null));
     }
 
     private void recipeOverviewListButtonTest(@NotNull ClientGameTestContext context) {
@@ -117,7 +117,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
         input.pressMouse(0);
 
         context.waitFor(client -> {
-            if (!(client.screen instanceof RecipeScreen recipeScreen)) return false;
+            if (!(client.gui.screen() instanceof RecipeScreen recipeScreen)) return false;
             try {
                 final Field close = recipeScreen.getClass().getDeclaredField("close");
                 close.setAccessible(true);
@@ -132,7 +132,7 @@ public class GalateaHunterGameTest implements FabricClientGameTest {
     }
 
     private void updatePricesButtonTest(@NotNull ClientGameTestContext context) {
-        context.runOnClient(client -> client.setScreen(new RecipeScreen()));
+        context.runOnClient(client -> client.gui.setScreen(new RecipeScreen()));
         context.waitForScreen(RecipeScreen.class);
 
         final Shard testShard = ShardService.INSTANCE.get("l4");
