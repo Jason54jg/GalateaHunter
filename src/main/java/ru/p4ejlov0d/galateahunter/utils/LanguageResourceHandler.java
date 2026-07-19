@@ -3,11 +3,11 @@ package ru.p4ejlov0d.galateahunter.utils;
 import com.google.gson.Gson;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.SynchronousResourceReloader;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.p4ejlov0d.galateahunter.model.LanguageModel;
@@ -15,12 +15,14 @@ import ru.p4ejlov0d.galateahunter.utils.config.ModConfigHolder;
 
 import java.io.BufferedReader;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import static ru.p4ejlov0d.galateahunter.GalateaHunter.LOGGER;
 import static ru.p4ejlov0d.galateahunter.GalateaHunter.MOD_ID;
 
 @Environment(EnvType.CLIENT)
-public class LanguageResourceHandler implements SynchronousResourceReloader {
+public class LanguageResourceHandler implements PreparableReloadListener {
     private static LanguageResourceHandler instance;
 
     private final Map<String, Resource> LANG_FILES = new HashMap<>();
@@ -48,7 +50,7 @@ public class LanguageResourceHandler implements SynchronousResourceReloader {
 
             String line;
 
-            try (BufferedReader reader = resource.getReader()) {
+            try (BufferedReader reader = resource.openAsReader()) {
                 while ((line = reader.readLine()) != null) {
                     if (line.contains("galateahunter.lang_name")) {
 
@@ -76,7 +78,7 @@ public class LanguageResourceHandler implements SynchronousResourceReloader {
         final Resource resource = Optional.ofNullable(LANG_FILES.get(getCurrentLangCode()))
                 .orElse(LANG_FILES.get("en_us"));
 
-        try (BufferedReader reader = resource.getReader()) {
+        try (BufferedReader reader = resource.openAsReader()) {
             final StringBuilder json = new StringBuilder();
             String s;
             final Gson gson = new Gson();
@@ -93,14 +95,18 @@ public class LanguageResourceHandler implements SynchronousResourceReloader {
 
     public @Nullable String getCurrentLangCode() {
         return Optional.ofNullable(currentLangCode).orElseGet(
-                () -> MinecraftClient.getInstance() != null ? MinecraftClient.getInstance().getLanguageManager().getLanguage() : null
+                () -> Minecraft.getInstance() != null ? Minecraft.getInstance().getLanguageManager().getSelected() : null
         );
     }
 
-    @Override
-    public void reload(@NotNull ResourceManager manager) {
-        for (Identifier id : manager.findResources("lang", path -> path.toString().endsWith(".json")).keySet())
+    private void reload(@NotNull ResourceManager manager) {
+        for (Identifier id : manager.listResources("lang", path -> path.toString().endsWith(".json")).keySet())
             if (id.getNamespace().equals(MOD_ID))
                 LANG_FILES.put(id.getPath().split("/")[1].split("\\.")[0], manager.getResource(id).get());
+    }
+
+    @Override
+    public CompletableFuture<Void> reload(SharedState state, Executor prepareExecutor, PreparationBarrier barrier, Executor applyExecutor) {
+        return barrier.wait(null).thenRunAsync(() -> reload(state.resourceManager()), applyExecutor);
     }
 }

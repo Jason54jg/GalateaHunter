@@ -2,8 +2,8 @@ package ru.p4ejlov0d.galateahunter.service;
 
 import com.google.gson.Gson;
 import com.llamalad7.mixinextras.lib.apache.commons.tuple.Pair;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.util.Identifier;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.p4ejlov0d.galateahunter.model.Shard;
@@ -26,7 +26,7 @@ import static ru.p4ejlov0d.galateahunter.repo.impl.ShardRepoImpl.imagesRootPath;
 public class ShardService extends AbstractService<ShardRepo, String, Shard> {
     public static final ShardService INSTANCE = new ShardService();
 
-    private ResourcePack resourcePack;
+    private PackResources resourcePack;
 
     private ShardService() {
         super(new ShardRepoImpl());
@@ -93,7 +93,7 @@ public class ShardService extends AbstractService<ShardRepo, String, Shard> {
                     final File image = entry.getValue().getRight();
 
                     final Shard shard = new Gson().fromJson(json.substring(6, json.lastIndexOf("},") == -1 ? json.length() : json.lastIndexOf("},") + 1), Shard.class);
-                    Identifier texture = Identifier.of(MOD_ID, image.getName());
+                    Identifier texture = Identifier.fromNamespaceAndPath(MOD_ID, image.getName());
 
                     shard.id = id;
                     shard.texture = texture;
@@ -120,7 +120,7 @@ public class ShardService extends AbstractService<ShardRepo, String, Shard> {
         });
     }
 
-    public void setResourcePack(@NotNull ResourcePack resourcePack) {
+    public void setResourcePack(@NotNull PackResources resourcePack) {
         this.resourcePack = resourcePack;
     }
 

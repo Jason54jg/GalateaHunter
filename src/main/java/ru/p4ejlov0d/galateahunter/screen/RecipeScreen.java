@@ -2,17 +2,17 @@ package ru.p4ejlov0d.galateahunter.screen;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.screen.ButtonTextures;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ import static ru.p4ejlov0d.galateahunter.GalateaHunter.MOD_ID;
 @SuppressWarnings("SuspiciousNameCombination")
 @Environment(EnvType.CLIENT)
 public class RecipeScreen extends Screen {
-    private static final Text TITLE = Text.literal("Recipe");
+    private static final Component TITLE = Component.literal("Recipe");
     public static boolean minimized;
     private static RecipeScreen savedRecipeScreen;
 
@@ -58,7 +58,7 @@ public class RecipeScreen extends Screen {
     private TextFieldWidgetWithSuggestions<Shard> search;
     private IconButtonWidget close;
     private IconButtonWidget list;
-    private TextFieldWidget quantityField;
+    private EditBox quantityField;
     private ScalableWidget recipeWidget;
     private IconButtonWidget minimize;
 
@@ -76,16 +76,18 @@ public class RecipeScreen extends Screen {
     }
 
     public static RecipeScreen restoreScreen() {
-        savedRecipeScreen.width = savedRecipeScreen.client.getWindow().getScaledWidth();
-        savedRecipeScreen.height = savedRecipeScreen.client.getWindow().getScaledHeight();
-        savedRecipeScreen.search.setDimensionsAndPosition((int) (savedRecipeScreen.width / 2.5d), 30, (int) (savedRecipeScreen.width / 3.3333333d), 5);
-        savedRecipeScreen.quantityField.setText(savedRecipeScreen.quantityField.getText());
+        savedRecipeScreen.width = savedRecipeScreen.minecraft.getWindow().getGuiScaledWidth();
+        savedRecipeScreen.height = savedRecipeScreen.minecraft.getWindow().getGuiScaledHeight();
+        savedRecipeScreen.search.setSize((int) (savedRecipeScreen.width / 3.3333333d), 5);
+        savedRecipeScreen.search.setPosition((int) (savedRecipeScreen.width / 2.5d), 30);
+        savedRecipeScreen.quantityField.setValue(savedRecipeScreen.quantityField.getValue());
         savedRecipeScreen.quantityField.setWidth(savedRecipeScreen.width / 4 - 34);
         savedRecipeScreen.recipeWidget.setPosition(savedRecipeScreen.list.visible ? 5 : savedRecipeScreen.width / 4 + 10, 45);
         savedRecipeScreen.recipeWidget.setWidth(savedRecipeScreen.list.visible ? savedRecipeScreen.width - 10 : savedRecipeScreen.width - (savedRecipeScreen.width / 4 + 15));
         savedRecipeScreen.recipeWidget.setHeight(savedRecipeScreen.height - 50);
         savedRecipeScreen.recipeWidget.setDrawsBackground(true);
-        savedRecipeScreen.minimize.setDimensionsAndPosition(20, 20, savedRecipeScreen.recipeWidget.getX() + savedRecipeScreen.recipeWidget.getWidth() - 30, savedRecipeScreen.recipeWidget.getY() + savedRecipeScreen.recipeWidget.getHeight() - 90);
+        savedRecipeScreen.minimize.setSize(20, 20);
+        savedRecipeScreen.minimize.setPosition(savedRecipeScreen.recipeWidget.getX() + savedRecipeScreen.recipeWidget.getWidth() - 30, savedRecipeScreen.recipeWidget.getY() + savedRecipeScreen.recipeWidget.getHeight() - 90);
 
         return savedRecipeScreen;
     }
@@ -94,8 +96,8 @@ public class RecipeScreen extends Screen {
     protected void init() {
         languageModel = LanguageResourceHandler.getInstance().getLanguageModel();
 
-        final Identifier normalSearchTexture = Identifier.of(MOD_ID, "textures/gui/search-field.png");
-        final Identifier focusedSearchTexture = Identifier.of(MOD_ID, "textures/gui/search-field-highlighted.png");
+        final Identifier normalSearchTexture = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/search-field.png");
+        final Identifier focusedSearchTexture = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/search-field-highlighted.png");
 
         search = new TextFieldWidgetWithSuggestions.Builder<Shard>()
                 .normalTexture(normalSearchTexture)
@@ -104,42 +106,42 @@ public class RecipeScreen extends Screen {
                 .y(5)
                 .width((int) (width / 2.5d))
                 .height(30)
-                .placeholder(Text.literal(languageModel.search()).styled(style -> style.withoutShadow().withColor(0xFFFFFFFF)))
+                .placeholder(Component.literal(languageModel.search()).withStyle(style -> style.withoutShadow().withColor(0xFFFFFFFF)))
                 .toTextureFunction(shard -> shard.texture)
                 .toSuggestionRender(shard -> (context, x, y, width, height, mouseX, mouseY, deltaTicks) -> {
-                    final ButtonTextures textures = new ButtonTextures(Identifier.of(MOD_ID, "textures/gui/" + shard.rarity + ".png"), Identifier.of(MOD_ID, "textures/gui/" + shard.rarity + "-selected.png"));
+                    final WidgetSprites textures = new WidgetSprites(Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/" + shard.rarity + ".png"), Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/" + shard.rarity + "-selected.png"));
                     final boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
 
-                    context.drawTexture(RenderPipelines.GUI_TEXTURED, textures.get(true, hovered), x, y, 0f, 0f, width, height, width, height);
-                    context.drawTexture(RenderPipelines.GUI_TEXTURED, shard.texture, x + 4, y + 2, 0f, 0f, height - 6, height - 6, height - 6, height - 6);
-                    context.drawText(textRenderer, Text.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Text.literal(" (" + shard.id.toUpperCase() + ")").withColor(0xFF808080)), x + height + 2, y + height - height * 85 / 100, 0xFFFFFFFF, false);
-                    context.drawText(textRenderer, shard.family, x + height + 2, y + height * 62 / 100, 0xFFFFFFFF, false);
+                    context.blit(RenderPipelines.GUI_TEXTURED, textures.get(true, hovered), x, y, 0f, 0f, width, height, width, height);
+                    context.blit(RenderPipelines.GUI_TEXTURED, shard.texture, x + 4, y + 2, 0f, 0f, height - 6, height - 6, height - 6, height - 6);
+                    context.drawString(font, Component.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Component.literal(" (" + shard.id.toUpperCase() + ")").withColor(0xFF808080)), x + height + 2, y + height - height * 85 / 100, 0xFFFFFFFF, false);
+                    context.drawString(font, shard.family, x + height + 2, y + height * 62 / 100, 0xFFFFFFFF, false);
                 })
                 .toStringFunction(shard -> shard.name)
-                .build(textRenderer, shardService.getShards());
+                .build(font, shardService.getShards());
 
         if (searchText != null) {
-            search.write(searchText);
+            search.insertText(searchText);
             this.setFocused(search);
         }
 
         final IconButtonWidget settings = new IconButtonWidget(width - 30, 10, 20, 20,
-                Identifier.of(MOD_ID, "textures/gui/settings.png"),
-                Identifier.of(MOD_ID, "textures/gui/settings-highlighted.png"),
-                btn -> client.setScreen(GalateaHunterScreen.createGui(this, languageModel.huntingCategory()))
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/settings.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/settings-highlighted.png"),
+                btn -> minecraft.setScreen(GalateaHunterScreen.createGui(this, languageModel.huntingCategory()))
         );
 
         final IconButtonWidget update = new IconButtonWidget(width - 55, 10, 20, 20,
-                Identifier.of(MOD_ID, "textures/gui/refresh.png"),
-                Identifier.of(MOD_ID, "textures/gui/refresh-highlighted.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/refresh.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/refresh-highlighted.png"),
                 btn -> bazaarService.load()
         );
 
-        update.setTooltip(Tooltip.of(Text.literal(languageModel.refreshPricesTooltip())));
+        update.setTooltip(Tooltip.create(Component.literal(languageModel.refreshPricesTooltip())));
 
         close = new IconButtonWidget(5, 20, 15, 15,
-                Identifier.of(MOD_ID, "textures/gui/close.png"),
-                Identifier.of(MOD_ID, "textures/gui/close-highlighted.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/close.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/close-highlighted.png"),
                 btn -> {
                     btn.visible = false;
                     list.visible = true;
@@ -151,8 +153,8 @@ public class RecipeScreen extends Screen {
         close.visible = false;
 
         list = new IconButtonWidget(5, 20, 15, 15,
-                Identifier.of(MOD_ID, "textures/gui/list.png"),
-                Identifier.of(MOD_ID, "textures/gui/list-highlighted.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/list.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/list-highlighted.png"),
                 btn -> {
                     btn.visible = false;
                     close.visible = true;
@@ -168,10 +170,10 @@ public class RecipeScreen extends Screen {
                 .focusedTexture(focusedSearchTexture)
                 .position(35, 167)
                 .size(width / 4 - 34, 11)
-                .build(textRenderer, null);
+                .build(font, null);
 
         quantityField.visible = false;
-        quantityField.setChangedListener(string -> {
+        quantityField.setResponder(string -> {
             try {
                 int quantity = Integer.parseInt(string);
                 if (quantity < 0) return;
@@ -264,13 +266,13 @@ public class RecipeScreen extends Screen {
                         final int startX = x + 5;
                         final int textX = startX + textureSize + 5;
 
-                        context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/" + shard.rarity + ".png"), x, y, 0f, 0f, nodeWidth, nodeHeight, nodeWidth, nodeHeight);
-                        context.drawTexture(RenderPipelines.GUI_TEXTURED, shard.texture, startX, startY, 0f, 0f, textureSize, textureSize, textureSize, textureSize);
-                        context.drawText(textRenderer, Text.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Text.literal(" x" + fusionData.quantity).withColor(0xFF808080)), textX, startY, 0xFFFFFFFF, false);
+                        context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/" + shard.rarity + ".png"), x, y, 0f, 0f, nodeWidth, nodeHeight, nodeWidth, nodeHeight);
+                        context.blit(RenderPipelines.GUI_TEXTURED, shard.texture, startX, startY, 0f, 0f, textureSize, textureSize, textureSize, textureSize);
+                        context.drawString(font, Component.literal(shard.name).withColor(getColorByRarity(shard.rarity)).append(Component.literal(" x" + fusionData.quantity).withColor(0xFF808080)), textX, startY, 0xFFFFFFFF, false);
 
                         if (hasChildren) {
-                            context.drawText(textRenderer, Text.literal(languageModel.fusions() + ": " + fusionData.fusionQuantity), textX, startY + 11, 0xFFFFFFFF, false);
-                            context.drawText(textRenderer, Text.literal(languageModel.totalReptiles() + ": " + fusionData.pureReptiles), textX, startY + 22, 0xFFFFFFFF, false);
+                            context.drawString(font, Component.literal(languageModel.fusions() + ": " + fusionData.fusionQuantity), textX, startY + 11, 0xFFFFFFFF, false);
+                            context.drawString(font, Component.literal(languageModel.totalReptiles() + ": " + fusionData.pureReptiles), textX, startY + 22, 0xFFFFFFFF, false);
 
                             final var left = node.children.getFirst();
                             final var right = node.children.getLast();
@@ -283,10 +285,10 @@ public class RecipeScreen extends Screen {
                             final int rightCenterX = xYPos.get(right).getLeft() + nodeWidth / 2;
                             final int rightCenterY = xYPos.get(right).getRight();
 
-                            final Text fusionCost = Text.literal(languageModel.fusionCost() + ": ").append(getPrettyCoins(recipeService.getCheapestRecipePrice(shard))).withColor(0xFF808080);
+                            final Component fusionCost = Component.literal(languageModel.fusionCost() + ": ").append(getPrettyCoins(recipeService.getCheapestRecipePrice(shard))).withColor(0xFF808080);
 
-                            context.drawText(textRenderer, fusionCost, nodeCenterX - textRenderer.getWidth(fusionCost) - 3, lineCenterY - 10, 0xFFFFFFFF, false);
-                            context.drawText(textRenderer, Text.literal(languageModel.buyCost() + ": ").append(getPrettyCoins(bazaarService.getPrice(shard, 1))).withColor(0xFF808080), nodeCenterX + 3, lineCenterY - 10, 0xFFFFFFFF, false);
+                            context.drawString(font, fusionCost, nodeCenterX - font.width(fusionCost) - 3, lineCenterY - 10, 0xFFFFFFFF, false);
+                            context.drawString(font, Component.literal(languageModel.buyCost() + ": ").append(getPrettyCoins(bazaarService.getPrice(shard, 1))).withColor(0xFF808080), nodeCenterX + 3, lineCenterY - 10, 0xFFFFFFFF, false);
 
                             context.fill(nodeCenterX - 1, nodeCenterY, nodeCenterX + 1, lineCenterY, getColorByRarity(shard.rarity));
 
@@ -297,57 +299,57 @@ public class RecipeScreen extends Screen {
                             context.fill(leftCenterX - 1, lineCenterY, leftCenterX + 1, leftCenterY, getColorByRarity(left.key.rarity));
                             context.fill(rightCenterX - 1, lineCenterY, rightCenterX + 1, rightCenterY, getColorByRarity(right.key.rarity));
                         } else {
-                            context.drawText(textRenderer, Text.literal(languageModel.quantity() + ": " + fusionData.quantity), textX, startY + 11, 0xFFFFFFFF, false);
-                            context.drawText(textRenderer, Text.literal(languageModel.buyCost() + ": ").append(getPrettyCoins(fusionData.price)), textX, startY + 22, 0xFFFFFFFF, false);
+                            context.drawString(font, Component.literal(languageModel.quantity() + ": " + fusionData.quantity), textX, startY + 11, 0xFFFFFFFF, false);
+                            context.drawString(font, Component.literal(languageModel.buyCost() + ": ").append(getPrettyCoins(fusionData.price)), textX, startY + 22, 0xFFFFFFFF, false);
                         }
                     }
                 })
                 .size(width - (width / 4 + 15), height - 50)
-                .background(Identifier.of(MOD_ID, "textures/gui/recipe-background.png"))
-                .zoomIn(Identifier.of(MOD_ID, "textures/gui/zoom-in.png"), Identifier.of(MOD_ID, "textures/gui/zoom-in-highlighted.png"))
-                .zoomOut(Identifier.of(MOD_ID, "textures/gui/zoom-out.png"), Identifier.of(MOD_ID, "textures/gui/zoom-out-highlighted.png"))
+                .background(Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/recipe-background.png"))
+                .zoomIn(Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/zoom-in.png"), Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/zoom-in-highlighted.png"))
+                .zoomOut(Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/zoom-out.png"), Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/zoom-out-highlighted.png"))
                 .build();
 
         recipeWidget.visible = false;
 
         minimize = new IconButtonWidget(recipeWidget.getX() + recipeWidget.getWidth() - 30, recipeWidget.getY() + recipeWidget.getHeight() - 90, 20, 20,
-                Identifier.of(MOD_ID, "textures/gui/minimize.png"),
-                Identifier.of(MOD_ID, "textures/gui/minimize-highlighted.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/minimize.png"),
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/minimize-highlighted.png"),
                 btn -> {
                     minimized = true;
                     savedRecipeScreen = this;
-                    this.close();
+                    this.minecraft.setScreen(null);
                 }
         );
-        minimize.setTooltip(Tooltip.of(Text.literal(languageModel.minimize())));
+        minimize.setTooltip(Tooltip.create(Component.literal(languageModel.minimize())));
         minimize.visible = false;
 
-        addDrawableChild(minimize);
-        addDrawableChild(recipeWidget);
-        addDrawableChild(search);
-        addDrawableChild(settings);
-        addDrawableChild(update);
-        addDrawableChild(list);
-        addDrawableChild(close);
-        addDrawableChild(quantityField);
+        addRenderableWidget(minimize);
+        addRenderableWidget(recipeWidget);
+        addRenderableWidget(search);
+        addRenderableWidget(settings);
+        addRenderableWidget(update);
+        addRenderableWidget(list);
+        addRenderableWidget(close);
+        addRenderableWidget(quantityField);
     }
 
     @Override
-    protected void refreshWidgetPositions() {
+    protected void repositionElements() {
         if (savedRecipeScreen == null) {
-            super.refreshWidgetPositions();
+            super.repositionElements();
         } else {
             savedRecipeScreen = null;
         }
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         if (search.mouseClicked(click, doubled) && !search.isMouseOverSearchField(click.x(), click.y())) {
             list.onPress(null);
             recipeWidget.visible = true;
             minimize.visible = true;
-            quantityField.setText("" + getQuantityByRarity(search.getSelectedSuggestion().rarity));
+            quantityField.setValue("" + getQuantityByRarity(search.getSelectedSuggestion().rarity));
 
             return true;
         }
@@ -355,17 +357,17 @@ public class RecipeScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(@NonNull DrawContext context, int mouseX, int mouseY, float deltaTicks) {
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/background-screen.png"), 0, 0, 0f, 0f, width, height, width, height);
+    public void renderBackground(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+        context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/background-screen.png"), 0, 0, 0f, 0f, width, height, width, height);
     }
 
     @Override
-    public void render(@NonNull DrawContext context, int mouseX, int mouseY, float deltaTicks) {
-        applyBlur(context);
+    public void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+        renderBlurredBackground(context);
 
         // header
-        final Identifier header = Identifier.of(MOD_ID, "textures/gui/header.png");
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, header, 0, 0, 0f, 0f, width, 40, width, 40);
+        final Identifier header = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/header.png");
+        context.blit(RenderPipelines.GUI_TEXTURED, header, 0, 0, 0f, 0f, width, 40, width, 40);
 
         // overview
         if (close.visible) {
@@ -394,51 +396,51 @@ public class RecipeScreen extends Screen {
                 });
             }
 
-            final Identifier rectangle = Identifier.of(MOD_ID, "textures/gui/rectangle.png");
+            final Identifier rectangle = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/rectangle.png");
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 45, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/target.png"), 10, 50, 0f, 0f, 20, 20, 20, 20);
-            context.drawText(textRenderer, Text.literal(languageModel.overview()).styled(style -> style.withBold(true)), 35, 50, 0xFFFFFFFF, false);
+            context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 45, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/target.png"), 10, 50, 0f, 0f, 20, 20, 20, 20);
+            context.drawString(font, Component.literal(languageModel.overview()).withStyle(style -> style.withBold(true)), 35, 50, 0xFFFFFFFF, false);
 
             int offset = 35;
             for (Map.Entry<Shard, Integer> entry : overview.entrySet()) {
                 final Shard shard = entry.getKey();
                 final int quantity = entry.getValue();
-                final Text quantityString = Text.literal(String.valueOf(quantity));
+                final Component quantityString = Component.literal(String.valueOf(quantity));
 
-                context.drawTexture(RenderPipelines.GUI_TEXTURED, shard.texture, offset, 58, 0f, 0f, 7, 7, 7, 7);
-                context.drawText(textRenderer, quantityString, offset, 67, 0xFFFFFFFF, false);
+                context.blit(RenderPipelines.GUI_TEXTURED, shard.texture, offset, 58, 0f, 0f, 7, 7, 7, 7);
+                context.drawString(font, quantityString, offset, 67, 0xFFFFFFFF, false);
 
-                offset += textRenderer.getWidth(quantityString) + 5;
+                offset += font.width(quantityString) + 5;
             }
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 80, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/dollar.png"), 10, 85, 0f, 0f, 20, 20, 20, 20);
-            context.drawText(textRenderer, Text.literal(languageModel.totalCoins()).styled(style -> style.withBold(true)), 35, 85, 0xFFFFFFFF, false);
-            context.drawText(textRenderer, getPrettyCoins(totalCoins.get()), 35, 97, 0xFFFFFFFF, false);
+            context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 80, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/dollar.png"), 10, 85, 0f, 0f, 20, 20, 20, 20);
+            context.drawString(font, Component.literal(languageModel.totalCoins()).withStyle(style -> style.withBold(true)), 35, 85, 0xFFFFFFFF, false);
+            context.drawString(font, getPrettyCoins(totalCoins.get()), 35, 97, 0xFFFFFFFF, false);
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 115, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/stonks.png"), 10, 120, 0f, 0f, 20, 20, 20, 20);
-            context.drawText(textRenderer, Text.literal(languageModel.coinsSaved()).styled(style -> style.withBold(true)), 35, 120, 0xFFFFFFFF, false);
-            context.drawText(textRenderer, getPrettyCoins(bazaarService.getPrice(tree.root.key, tree.root.value.quantity) - Long.parseLong(totalCoins.toString())), 35, 132, 0xFFFFFFFF, false);
+            context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 115, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/stonks.png"), 10, 120, 0f, 0f, 20, 20, 20, 20);
+            context.drawString(font, Component.literal(languageModel.coinsSaved()).withStyle(style -> style.withBold(true)), 35, 120, 0xFFFFFFFF, false);
+            context.drawString(font, getPrettyCoins(bazaarService.getPrice(tree.root.key, tree.root.value.quantity) - Long.parseLong(totalCoins.toString())), 35, 132, 0xFFFFFFFF, false);
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 150, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/prismarine-shard.png"), 10, 155, 0f, 0f, 20, 20, 20, 20);
-            context.drawText(textRenderer, Text.literal(languageModel.totalShards()).styled(style -> style.withBold(true)), 35, 155, 0xFFFFFFFF, false);
+            context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 150, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/prismarine-shard.png"), 10, 155, 0f, 0f, 20, 20, 20, 20);
+            context.drawString(font, Component.literal(languageModel.totalShards()).withStyle(style -> style.withBold(true)), 35, 155, 0xFFFFFFFF, false);
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 185, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/loop.png"), 10, 190, 0f, 0f, 20, 20, 20, 20);
-            context.drawText(textRenderer, Text.literal(languageModel.totalFusions()).styled(style -> style.withBold(true)), 35, 190, 0xFFFFFFFF, false);
-            context.drawText(textRenderer, Text.literal(totalFusions.toString()), 35, 202, 0xFFFFFFFF, false);
+            context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 185, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/loop.png"), 10, 190, 0f, 0f, 20, 20, 20, 20);
+            context.drawString(font, Component.literal(languageModel.totalFusions()).withStyle(style -> style.withBold(true)), 35, 190, 0xFFFFFFFF, false);
+            context.drawString(font, Component.literal(totalFusions.toString()), 35, 202, 0xFFFFFFFF, false);
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, rectangle, 5, 220, 0f, 0f, width / 4, 30, width / 4, 30);
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(MOD_ID, "textures/gui/reptile.png"), 10, 225, 0f, 0f, 20, 20, 20, 20);
-            context.drawText(textRenderer, Text.literal(languageModel.totalReptiles()).styled(style -> style.withBold(true)), 35, 225, 0xFFFFFFFF, false);
-            context.drawText(textRenderer, Text.literal(totalReptiles.toString()), 35, 237, 0xFFFFFFFF, false);
+            context.blit(RenderPipelines.GUI_TEXTURED, rectangle, 5, 220, 0f, 0f, width / 4, 30, width / 4, 30);
+            context.blit(RenderPipelines.GUI_TEXTURED, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/reptile.png"), 10, 225, 0f, 0f, 20, 20, 20, 20);
+            context.drawString(font, Component.literal(languageModel.totalReptiles()).withStyle(style -> style.withBold(true)), 35, 225, 0xFFFFFFFF, false);
+            context.drawString(font, Component.literal(totalReptiles.toString()), 35, 237, 0xFFFFFFFF, false);
         }
 
-        for (Element element : children()) {
-            ((Drawable) element).render(context, mouseX, mouseY, deltaTicks);
+        for (GuiEventListener element : children()) {
+            ((Renderable) element).render(context, mouseX, mouseY, deltaTicks);
         }
         minimize.render(context, mouseX, mouseY, deltaTicks);
     }
@@ -466,31 +468,31 @@ public class RecipeScreen extends Screen {
         };
     }
 
-    private @NotNull Text getPrettyCoins(long coins) {
+    private @NotNull Component getPrettyCoins(long coins) {
         String coinsString = String.valueOf(coins);
         String minus = "";
         if (coinsString.startsWith("-")) {
             minus = "-";
             coinsString = coinsString.substring(1);
         }
-        if (coinsString.length() <= 3) return Text.literal(minus + coinsString);
+        if (coinsString.length() <= 3) return Component.literal(minus + coinsString);
 
         final float one = Float.parseFloat(coinsString.charAt(0) + "." + coinsString.substring(1));
         final float two = Float.parseFloat(coinsString.substring(0, 2) + "." + coinsString.substring(2));
         final float three = Float.parseFloat(coinsString.substring(0, 3) + "." + coinsString.substring(3));
 
         return switch (coinsString.length()) {
-            case 4 -> Text.literal(minus + String.format("%.2f", one) + "K");
-            case 5 -> Text.literal(minus + String.format("%.2f", two) + "K");
-            case 6 -> Text.literal(minus + String.format("%.2f", three) + "K");
-            case 7 -> Text.literal(minus + String.format("%.2f", one) + "M");
-            case 8 -> Text.literal(minus + String.format("%.2f", two) + "M");
-            case 9 -> Text.literal(minus + String.format("%.2f", three) + "M");
-            case 10 -> Text.literal(minus + String.format("%.2f", one) + "B");
-            case 11 -> Text.literal(minus + String.format("%.2f", two) + "B");
-            case 12 -> Text.literal(minus + String.format("%.2f", three) + "B");
+            case 4 -> Component.literal(minus + String.format("%.2f", one) + "K");
+            case 5 -> Component.literal(minus + String.format("%.2f", two) + "K");
+            case 6 -> Component.literal(minus + String.format("%.2f", three) + "K");
+            case 7 -> Component.literal(minus + String.format("%.2f", one) + "M");
+            case 8 -> Component.literal(minus + String.format("%.2f", two) + "M");
+            case 9 -> Component.literal(minus + String.format("%.2f", three) + "M");
+            case 10 -> Component.literal(minus + String.format("%.2f", one) + "B");
+            case 11 -> Component.literal(minus + String.format("%.2f", two) + "B");
+            case 12 -> Component.literal(minus + String.format("%.2f", three) + "B");
             default ->
-                    Text.literal(minus + coinsString.substring(0, 3) + "Be" + (coinsString.substring(3).length() - 9));
+                    Component.literal(minus + coinsString.substring(0, 3) + "Be" + (coinsString.substring(3).length() - 9));
         };
     }
 }

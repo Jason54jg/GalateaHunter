@@ -1,6 +1,6 @@
 package ru.p4ejlov0d.galateahunter.utils;
 
-import net.minecraft.resource.Resource;
+import net.minecraft.server.packs.resources.Resource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

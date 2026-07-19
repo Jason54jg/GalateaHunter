@@ -2,7 +2,7 @@ package ru.p4ejlov0d.galateahunter.model;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 import java.util.Objects;
 
